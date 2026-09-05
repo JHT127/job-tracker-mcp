@@ -148,3 +148,14 @@ export async function listApplications(
     truncated,
   };
 }
+
+export async function searchApplications(query: string) {
+  const applications = await loadApplications(); 
+  const q = query.trim().toLowerCase();
+
+  return applications.filter(
+    (app) =>
+      app.company.toLowerCase().includes(q) ||
+      app.role.toLowerCase().includes(q)
+  );
+}

@@ -6,6 +6,7 @@ import { registerDeleteApplicationTool } from "./tools/deleteApplication.js";
 import { registerGetNextActionsTool } from "./tools/getNextActions.js";
 import { registerListApplicationsTool } from "./tools/listApplications.js";
 import { registerUpdateStatusTool } from "./tools/updateStatus.js";
+import { registerSearchApplicationsTool } from "./tools/searchApplications.js";
 
 function createServer(): McpServer {
   const server = new McpServer({
@@ -18,7 +19,7 @@ function createServer(): McpServer {
   registerListApplicationsTool(server);
   registerUpdateStatusTool(server);
   registerGetNextActionsTool(server);
-
+  registerSearchApplicationsTool(server); 
   return server;
 }
 
