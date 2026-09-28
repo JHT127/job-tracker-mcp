@@ -3,6 +3,10 @@ node_modules/
 
 # Build output
 dist/
+coverage/
+
+# User-specific application records
+data/applications.json
 
 # Environment variables
 .env*
