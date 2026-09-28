@@ -1,5 +1,4 @@
-import assert from "node:assert/strict";
-import test from "node:test";
+import { expect, test } from "vitest";
 
 import { buildNextActions } from "./getNextActions.js";
 
@@ -27,12 +26,14 @@ test("buildNextActions flags stale applications and recent status changes", () =
 
   const actions = buildNextActions(applications);
 
-  assert.ok(
+  expect(
     actions.some(
       (action) =>
         action.reason.includes("stale") ||
         action.reason.includes("days without"),
     ),
+  ).toBe(true);
+  expect(actions.some((action) => action.reason.includes("recently"))).toBe(
+    true,
   );
-  assert.ok(actions.some((action) => action.reason.includes("recently")));
 });
