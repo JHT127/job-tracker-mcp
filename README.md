@@ -11,15 +11,15 @@ The server allows an MCP client such as MCP Inspector to:
 - Delete applications.
 - Get suggested next actions.
 
-Application data is stored locally in:
+Application data is stored locally in SQLite by default:
 
 ```text
-./data/applications.json
+./data/applications.sqlite
 ```
 
-On first use, the server creates this ignored runtime file from the fictional
-records in `./data/sample-data.json`. The sample remains tracked; your
-application records do not.
+Set `STORAGE=json` to use `./data/applications.json`. A new SQLite database or
+JSON file is initialized from the fictional records in `./data/sample-data.json`;
+runtime files are ignored by Git.
 
 The project does not require external APIs, databases, API keys, or network services.
 
@@ -204,7 +204,9 @@ On macOS, a typical clone path is `/Users/YOUR_USERNAME/my-first-mcp`; on Linux,
 | `list_applications`   | Lists stored job applications.                            |    ✅     |
 | `search_applications` | Searches applications by company or role keyword.         |    ✅     |
 | `update_status`       | Updates the status of an existing application.            |           |
-| `delete_application`  | Deletes an existing application by its ID.                |           |
+| `update_application`  | Updates any editable application field.                  |           |
+| `undo_last_change`    | Restores an application's previous editable values.       |           |
+| `delete_application`  | Deletes an application after explicit confirmation.       |           |
 | `get_next_actions`    | Returns suggested next actions based on application data. |    ✅     |
 
 ### `add_application`
@@ -239,17 +241,13 @@ Example input:
 
 ### `list_applications`
 
-Returns stored job applications from:
-
-```text
-./data/applications.json
-```
+Returns stored job applications from the configured repository.
 
 The tool validates application data before returning it and limits the amount of output returned.
 
 ### `search_applications`
 
-Searches stored job applications by a keyword, matching against the `company` or `role` fields (case-insensitive, partial match). This tool is **read-only** and does not modify `./data/applications.json`.
+Searches stored job applications by a keyword, matching against the `company` or `role` fields (case-insensitive, partial match). This tool is **read-only** and does not modify the configured repository.
 
 **Input:**
 
@@ -260,7 +258,7 @@ Searches stored job applications by a keyword, matching against the `company` or
 **Behavior:**
 
 1. Validates `query` against the schema.
-2. Reads all applications from `./data/applications.json`.
+2. Reads all applications from the configured repository.
 3. Filters records where `company` or `role` contains `query` (case-insensitive).
 4. Returns matching records as JSON, or a plain message if none match.
 
@@ -308,15 +306,28 @@ no_response
 
 If the application ID does not exist, the tool returns a clear error.
 
+### `update_application`
+
+Updates one or more editable fields, including status, notes, salary, location,
+work mode, job URL, priority, tags, deadline, and resume version. Status changes
+append an entry to `history` and update `updated_at`.
+
+### `undo_last_change`
+
+Restores the previous editable values saved by the most recent `update_status` or
+`update_application` call.
+
 ### `delete_application`
 
-Deletes an existing application record by its ID. Use this to remove a record added by mistake or a duplicate entry.
+Deletes an existing application record after the user confirms. Set `confirm`
+to `true` only after that confirmation; an omitted or false value does not delete.
 
 **Input:**
 
-| Field | Type   | Required | Notes                             |
-| ----- | ------ | :------: | --------------------------------- |
-| `id`  | string |   Yes    | The unique ID of the application. |
+| Field     | Type    | Required | Notes                                       |
+| --------- | ------- | :------: | ------------------------------------------- |
+| `id`      | string  |   Yes    | The unique ID of the application.           |
+| `confirm` | boolean |    No    | Must be `true` after explicit confirmation. |
 
 If the application ID does not exist, the tool returns a clear error instead of modifying the file.
 
@@ -434,11 +445,15 @@ career_fair
 
 ## Data Storage
 
-Application data is stored in a local JSON file:
+SQLite is the default storage backend. The database is created at:
 
 ```text
-./data/applications.json
+./data/applications.sqlite
 ```
+
+Set `STORAGE=json` to use `./data/applications.json` instead. If the configured
+store is empty, it imports existing JSON when applicable or initializes from
+`./data/sample-data.json`. Runtime data files are ignored by Git.
 
 If the runtime file is missing, the server initializes it from
 `./data/sample-data.json`. The runtime file is ignored by Git so personal
@@ -499,7 +514,8 @@ Example conversations showing the server in use with a model are in [`examples/c
 ```text
 my-first-mcp/
 ├── data/
-│   ├── applications.json  # created locally on first use; ignored by Git
+│   ├── applications.sqlite # default runtime database; ignored by Git
+│   ├── applications.json  # optional JSON runtime file; ignored by Git
 │   └── sample-data.json   # fictional starter records
 │
 ├── docs/
