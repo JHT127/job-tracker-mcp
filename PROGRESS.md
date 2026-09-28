@@ -32,7 +32,12 @@ The dashboard is a separate Vite/React project nested under `job-tracker-dashboa
 - [done] Enforce at least 90% line coverage for `src/core/`; current gated coverage is recorded below.
 - [todo] Connect dashboard data to the shared service through the planned REST API (Phase 3/5 dependency; see `docs/decisions.md`).
 - [done] Gate 1: clean install, typecheck, lint, full tests with coverage, build, and old-format migration tests pass.
-- [todo] Phase 2: implement the specified MCP tools, resources, prompts, transports, and end-to-end coverage; meet Gate 2.
+- [in-progress] Phase 2: add the requested MCP tools, resources, prompts, stdio/Streamable HTTP transports, and real-client E2E coverage.
+- [todo] Phase 2 task: persist contacts and interviews through the shared repository and core service.
+- [todo] Phase 2 task: implement stale/conversion/health insights, reconnect/interview workflows, posting/CV analysis, email/prep/report generation, and CSV import/export.
+- [todo] Phase 2 task: register all new tools with Zod input contracts, annotations, limits, and helpful error behavior; expose resources and prompts.
+- [todo] Phase 2 task: support stdio and Streamable HTTP; run an E2E test against the built server using the official MCP client.
+- [todo] Gate 2: MCP Inspector/client lists every tool with correct schemas and the real-client E2E suite passes.
 - [todo] Phase 3: implement the REST API, auth, validation, rate limiting, logging, OpenAPI, webhooks, and integration tests; meet Gate 3.
 - [todo] Phase 4: implement credential-backed integrations behind interfaces with mocks and setup docs; ensure zero-credential startup; meet Gate 4.
 - [todo] Phase 5: connect the dashboard to the API; add requested views, controls, accessibility, i18n, demo mode, component tests, and Playwright smoke test; meet Gate 5.
@@ -72,3 +77,4 @@ The dashboard is a separate Vite/React project nested under `job-tracker-dashboa
 - `npm test -- sqliteRepository.test.ts`: passed; 5 tests cover legacy import, sample bootstrap, persistence, transaction rollback, and import-once behavior.
 - `npm test -- getNextActionsTool.test.ts`: passed; 3 tests cover the limit/response regression, empty state, and generic errors.
 - `git status --short --branch`: clean on `upgrade/v1` after Gate 1; 52 local commits ahead of `origin/upgrade/v1`.
+- Current workspace has existing unstaged edits in `README.md`, `docs/data-plan.md`, and `job-tracker-dashboard/.../src/App.jsx`; they are preserved and excluded from Phase 2 commits.
