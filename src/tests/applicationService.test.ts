@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { ApplicationService } from "../core/applicationService.js";
+import type { ApplicationData } from "../schemas/applicationData.js";
 import {
   MemoryRepository,
   makeApplication,
@@ -8,7 +9,7 @@ import {
 
 const fixedNow = new Date("2026-08-01T10:00:00.000Z");
 
-function createService(applications = []) {
+function createService(applications: ApplicationData[] = []) {
   return new ApplicationService(
     new MemoryRepository(applications),
     () => new Date(fixedNow),
