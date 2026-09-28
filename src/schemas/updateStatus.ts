@@ -1,4 +1,5 @@
 import * as z from "zod/v4";
+import { applicationStatusSchema } from "./applicationData.js";
 
 // Schema for the update_status tool
 
@@ -9,12 +10,7 @@ export const updateStatusInputSchema = z.object({
     .max(100)
     .describe("The unique ID of the application to update."),
 
-  new_status: z
-    .enum([
-      "applied",
-      "interview",
-      "offer",
-      "rejected"
-    ])
-    .describe("The new status to set for this application (e.g.rejection)."),
-}); 
+  new_status: applicationStatusSchema.describe(
+    "The new status to set for this application (e.g.rejection).",
+  ),
+});
