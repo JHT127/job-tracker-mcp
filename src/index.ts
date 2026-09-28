@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import { McpServer } from "@modelcontextprotocol/server";
 import { serveStdio } from "@modelcontextprotocol/server/stdio";
 
@@ -19,7 +20,7 @@ function createServer(): McpServer {
   registerListApplicationsTool(server);
   registerUpdateStatusTool(server);
   registerGetNextActionsTool(server);
-  registerSearchApplicationsTool(server); 
+  registerSearchApplicationsTool(server);
   return server;
 }
 
