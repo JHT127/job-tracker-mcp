@@ -29,16 +29,32 @@ const SEED = [
 ];
 
 const STORE_KEY = "job-applications-en";
-const TODAY = new Date("2026-08-24");
+const FOLLOW_UP_DAYS = { applied: 14, interview: 7, no_response: 14 };
 
-function daysSince(dateStr) {
-  const d = new Date(dateStr);
-  return Math.floor((TODAY - d) / (1000 * 60 * 60 * 24));
+function daysSince(dateStr, now) {
+  const date = new Date(dateStr);
+  const dateDay = Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
+  const today = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+  return Math.floor((today - dateDay) / (1000 * 60 * 60 * 24));
 }
 
-function FolderCard({ app, onOpen }) {
+function withApplicationHistory(app) {
+  const updatedAt = app.updated_at || `${app.date_applied}T00:00:00.000Z`;
+  return {
+    ...app,
+    updated_at: updatedAt,
+    history: app.history || [{ status: app.status, timestamp: updatedAt }],
+  };
+}
+
+function needsFollowUp(app, now) {
+  const threshold = FOLLOW_UP_DAYS[app.status];
+  return threshold !== undefined && daysSince(app.updated_at || app.date_applied, now) >= threshold;
+}
+
+function FolderCard({ app, onOpen, now }) {
   const meta = STATUS_META[app.status] || STATUS_META.applied;
-  const stale = (app.status === "applied" || app.status === "interview") && daysSince(app.date_applied) > 14;
+  const stale = needsFollowUp(app, now());
   return (
     <button className="folder-card" onClick={() => onOpen(app)}>
       <div className="folder-tab">{app.id}</div>
@@ -50,7 +66,7 @@ function FolderCard({ app, onOpen }) {
           <span className="dot">·</span>
           <span>{SOURCE_LABEL[app.source] || app.source}</span>
         </div>
-        {stale && <div className="stale-flag">Needs follow-up · {daysSince(app.date_applied)}d</div>}
+        {stale && <div className="stale-flag">Needs follow-up · {daysSince(app.updated_at || app.date_applied, now())}d</div>}
       </div>
       <div className="stamp" style={{ "--stamp-color": meta.color, "--stamp-rot": `${meta.rot}deg` }}>
         {meta.label}
@@ -69,21 +85,23 @@ function Modal({ children, onClose }) {
   );
 }
 
-export default function JobTrackerDashboard() {
+export default function JobTrackerDashboard({ now = () => new Date() } = {}) {
   const [apps, setApps] = useState(null);
   const [filter, setFilter] = useState("all");
   const [selected, setSelected] = useState(null);
   const [adding, setAdding] = useState(false);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState("");
+  const currentDate = now();
 
   useEffect(() => {
     (async () => {
       try {
         const res = await window.storage.get(STORE_KEY);
-        setApps(res ? JSON.parse(res.value) : SEED);
+        const stored = res ? JSON.parse(res.value) : SEED;
+        setApps(stored.map(withApplicationHistory));
       } catch {
-        setApps(SEED);
+        setApps(SEED.map(withApplicationHistory));
       }
     })();
   }, []);
@@ -110,8 +128,8 @@ export default function JobTrackerDashboard() {
 
   const staleCount = useMemo(() => {
     if (!apps) return 0;
-    return apps.filter((a) => (a.status === "applied" || a.status === "interview") && daysSince(a.date_applied) > 14).length;
-  }, [apps]);
+    return apps.filter((app) => needsFollowUp(app, currentDate)).length;
+  }, [apps, currentDate]);
 
   const counts = useMemo(() => {
     const c = { all: apps?.length || 0 };
@@ -121,16 +139,40 @@ export default function JobTrackerDashboard() {
   }, [apps]);
 
   const updateStatus = async (id, newStatus) => {
-    const next = apps.map((a) => (a.id === id ? { ...a, status: newStatus } : a));
+    const timestamp = now().toISOString();
+    const next = apps.map((app) => {
+      if (app.id !== id) return app;
+      const history = app.history || withApplicationHistory(app).history;
+      return {
+        ...app,
+        status: newStatus,
+        updated_at: timestamp,
+        history:
+          app.status === newStatus
+            ? history
+            : [...history, { status: newStatus, timestamp }],
+      };
+    });
     await persist(next);
-    setSelected((s) => (s ? { ...s, status: newStatus } : s));
+    setSelected((selectedApp) =>
+      selectedApp ? next.find((app) => app.id === selectedApp.id) || selectedApp : selectedApp,
+    );
     showToast("Status updated");
   };
 
   const addApplication = async (form) => {
     setSaving(true);
     const id = "app-" + String((apps.length + 1)).padStart(3, "0") + "-" + Math.random().toString(36).slice(2, 5);
-    const next = [{ id, ...form }, ...apps];
+    const timestamp = now().toISOString();
+    const application = withApplicationHistory({
+      id,
+      ...form,
+      updated_at: timestamp,
+      priority: form.priority || "normal",
+      tags: form.tags || [],
+      history: [{ status: form.status, timestamp }],
+    });
+    const next = [application, ...apps];
     await persist(next);
     setSaving(false);
     setAdding(false);
@@ -161,7 +203,7 @@ export default function JobTrackerDashboard() {
 
       <header className="jt-header">
         <div>
-          <div className="eyebrow">APPLICATION ARCHIVE · {TODAY.toISOString().slice(0, 10)}</div>
+          <div className="eyebrow">APPLICATION ARCHIVE · {currentDate.toISOString().slice(0, 10)}</div>
           <h1>Job Application Tracker</h1>
         </div>
         <button className="btn-primary" onClick={() => setAdding(true)}>+ New Application</button>
@@ -190,7 +232,7 @@ export default function JobTrackerDashboard() {
       ) : (
         <div className="grid">
           {filtered.map((app) => (
-            <FolderCard key={app.id} app={app} onOpen={setSelected} />
+            <FolderCard key={app.id} app={app} onOpen={setSelected} now={now} />
           ))}
         </div>
       )}
@@ -227,7 +269,7 @@ export default function JobTrackerDashboard() {
 
       {adding && (
         <Modal onClose={() => !saving && setAdding(false)}>
-          <AddForm onCancel={() => setAdding(false)} onSubmit={addApplication} saving={saving} />
+          <AddForm onCancel={() => setAdding(false)} onSubmit={addApplication} saving={saving} now={now} />
         </Modal>
       )}
 
@@ -260,10 +302,10 @@ export default function JobTrackerDashboard() {
   );
 }
 
-function AddForm({ onCancel, onSubmit, saving }) {
+function AddForm({ onCancel, onSubmit, saving, now }) {
   const [company, setCompany] = useState("");
   const [role, setRole] = useState("");
-  const [date, setDate] = useState(TODAY.toISOString().slice(0, 10));
+  const [date, setDate] = useState(() => now().toISOString().slice(0, 10));
   const [source, setSource] = useState("cold_apply");
   const [status, setStatus] = useState("applied");
   const [notes, setNotes] = useState("");
