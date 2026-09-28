@@ -31,7 +31,7 @@ The dashboard is a separate Vite/React project nested under `job-tracker-dashboa
 - [done] Add regression tests for the next-actions response/limit bug, model history and timestamps, atomic/concurrent storage, SQLite/JSON migration, and service workflows.
 - [done] Enforce at least 90% line coverage for `src/core/`; current gated coverage is recorded below.
 - [todo] Connect dashboard data to the shared service through the planned REST API (Phase 3/5 dependency; see `docs/decisions.md`).
-- [in-progress] Gate 1: run clean install, typecheck, lint, full tests with coverage, build, and verify old-format migration before marking complete.
+- [done] Gate 1: clean install, typecheck, lint, full tests with coverage, build, and old-format migration tests pass.
 - [todo] Phase 2: implement the specified MCP tools, resources, prompts, transports, and end-to-end coverage; meet Gate 2.
 - [todo] Phase 3: implement the REST API, auth, validation, rate limiting, logging, OpenAPI, webhooks, and integration tests; meet Gate 3.
 - [todo] Phase 4: implement credential-backed integrations behind interfaces with mocks and setup docs; ensure zero-credential startup; meet Gate 4.
@@ -61,3 +61,14 @@ The dashboard is a separate Vite/React project nested under `job-tracker-dashboa
 - `npx prettier --check .github/workflows/ci.yml`: passed.
 - `git status --short --branch`: clean on `upgrade/v1` after Gate 0.
 - Phase 1 baseline `npm test`: passed; 2 test files and 3 tests.
+- Phase 1 `npm ci`: passed after pinning `better-sqlite3` to 11.10.0 for Windows/Node 22 prebuild compatibility; 190 packages audited, 0 vulnerabilities; Husky `prepare` ran.
+- Phase 1 `npm run typecheck`: passed.
+- Phase 1 `npm run lint`: passed with zero warnings.
+- Phase 1 `npm run test:coverage`: passed; 10 test files and 47 tests; `src/core/` line coverage 96.58% (threshold 90%), statements 95.32%.
+- Phase 1 `npm run build`: passed.
+- Phase 1 `npm run lint --prefix job-tracker-dashboard/job-tracker-dashboard`: passed.
+- Phase 1 `npm run build --prefix job-tracker-dashboard/job-tracker-dashboard`: passed.
+- `npm test -- jsonFileRepository.test.ts`: passed; 6 tests cover sample initialization, legacy migration, atomic writes, concurrency, and invalid/missing data.
+- `npm test -- sqliteRepository.test.ts`: passed; 5 tests cover legacy import, sample bootstrap, persistence, transaction rollback, and import-once behavior.
+- `npm test -- getNextActionsTool.test.ts`: passed; 3 tests cover the limit/response regression, empty state, and generic errors.
+- `git status --short --branch`: clean on `upgrade/v1` after Gate 1; 52 local commits ahead of `origin/upgrade/v1`.
