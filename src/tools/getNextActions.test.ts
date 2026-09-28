@@ -25,16 +25,18 @@ test("buildNextActions flags stale applications and recent status changes", () =
     },
   ]);
 
-  const actions = buildNextActions(applications);
+  const actions = buildNextActions(applications, {
+    now: new Date("2026-07-31T00:00:00.000Z"),
+  });
 
   expect(
     actions.some(
       (action) =>
-        action.reason.includes("stale") ||
-        action.reason.includes("days without"),
+        action.reason.includes("No status update") ||
+        action.reason.includes("days"),
     ),
   ).toBe(true);
-  expect(actions.some((action) => action.reason.includes("recently"))).toBe(
-    true,
-  );
+  expect(
+    actions.some((action) => action.reason.includes("Recently updated")),
+  ).toBe(true);
 });
