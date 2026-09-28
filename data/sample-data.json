@@ -1,0 +1,20 @@
+[
+  {
+    "id": "app-001",
+    "company": "Example Labs",
+    "role": "Software Engineer",
+    "date_applied": "2026-07-21",
+    "status": "applied",
+    "source": "cold_apply",
+    "notes": "Sample application"
+  },
+  {
+    "id": "app-002",
+    "company": "Sample Robotics",
+    "role": "Systems Engineer",
+    "date_applied": "2026-07-28",
+    "status": "interview",
+    "source": "referral",
+    "notes": "Sample interview"
+  }
+]
