@@ -96,12 +96,12 @@ export function registerGetNextActionsTool(server: McpServer) {
           content: [
             {
               type: "text",
-              text: JSON.stringify({ actions, total, truncated }, null, 2),
+              text,
             },
           ],
         };
-      } catch (err: any) {
-        console.error("[get_next_actions] error", err);
+      } catch (error: unknown) {
+        console.error("[get_next_actions] error", error);
 
         return {
           content: [
