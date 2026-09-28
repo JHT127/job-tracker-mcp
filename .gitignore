@@ -7,6 +7,9 @@ coverage/
 
 # User-specific application records
 data/applications.json
+data/applications.sqlite
+data/applications.sqlite-shm
+data/applications.sqlite-wal
 
 # Environment variables
 .env*
