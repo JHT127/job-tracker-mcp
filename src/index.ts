@@ -8,6 +8,8 @@ import { registerGetNextActionsTool } from "./tools/getNextActions.js";
 import { registerListApplicationsTool } from "./tools/listApplications.js";
 import { registerUpdateStatusTool } from "./tools/updateStatus.js";
 import { registerSearchApplicationsTool } from "./tools/searchApplications.js";
+import { registerUpdateApplicationTool } from "./tools/updateApplication.js";
+import { registerUndoLastChangeTool } from "./tools/undoLastChange.js";
 
 function createServer(): McpServer {
   const server = new McpServer({
@@ -21,6 +23,8 @@ function createServer(): McpServer {
   registerUpdateStatusTool(server);
   registerGetNextActionsTool(server);
   registerSearchApplicationsTool(server);
+  registerUpdateApplicationTool(server);
+  registerUndoLastChangeTool(server);
   return server;
 }
 
