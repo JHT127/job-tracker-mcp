@@ -23,7 +23,14 @@ The dashboard is a separate Vite/React project nested under `job-tracker-dashboa
 
 ## Later Phases — Not Started
 
-- [todo] Phase 1: fix known bugs; add shared core services and repository interface; support JSON and SQLite storage and migration; extend application fields/history; add editing, undo, duplicate warning, and delete confirmation; implement deterministic prioritized next actions; meet Gate 1 coverage and migration tests.
+- [in-progress] Phase 1: implement shared core, repositories, model migration, MCP tool changes, and Gate 1 tests.
+- [todo] Phase 1 task: fix remaining known bugs with regression coverage (in particular injected clock, status history/timestamps, and excluding terminal statuses from follow-up actions).
+- [todo] Phase 1 task: add pure `src/core/` application service, repository interface, next-actions engine, and stats; route MCP tools through the core.
+- [todo] Phase 1 task: add atomic/mutex-protected JSON repository and SQLite repository; select with `STORAGE=json|sqlite` (SQLite default) and safely import existing JSON.
+- [todo] Phase 1 task: extend the application model with `updated_at`, `history`, salary, location, work mode, job URL, priority, tags, deadline, and resume version while retaining legacy records.
+- [todo] Phase 1 task: add `update_application`, `undo_last_change`, duplicate warnings, and confirmed deletion.
+- [todo] Phase 1 task: test legacy data migration and reach at least 90% line coverage in `src/core/`.
+- [todo] Gate 1: core coverage threshold, regression tests, and old-format migration tests all pass.
 - [todo] Phase 2: implement the specified MCP tools, resources, prompts, transports, and end-to-end coverage; meet Gate 2.
 - [todo] Phase 3: implement the REST API, auth, validation, rate limiting, logging, OpenAPI, webhooks, and integration tests; meet Gate 3.
 - [todo] Phase 4: implement credential-backed integrations behind interfaces with mocks and setup docs; ensure zero-credential startup; meet Gate 4.
@@ -52,3 +59,4 @@ The dashboard is a separate Vite/React project nested under `job-tracker-dashboa
 - `git diff --check -- README.md` and `git diff --check -- docs/data-plan.md`: passed; targeted documentation edits have no whitespace errors.
 - `npx prettier --check .github/workflows/ci.yml`: passed.
 - `git status --short --branch`: clean on `upgrade/v1` after Gate 0.
+- Phase 1 baseline `npm test`: passed; 2 test files and 3 tests.
