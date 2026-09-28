@@ -7,7 +7,9 @@ import type {
   ApplicationDataInput,
   ApplicationStatus,
 } from "../schemas/applicationData.js";
+import { buildNextActions, type NextActionOptions } from "./nextActions.js";
 import type { ApplicationRepository } from "./repository.js";
+import { summarizeApplications } from "./stats.js";
 
 const MAX_APPLICATIONS = 50;
 const UNDO_HISTORY_LIMIT = 20;
@@ -77,6 +79,30 @@ export class ApplicationService {
         application.company.toLocaleLowerCase().includes(normalizedQuery) ||
         application.role.toLocaleLowerCase().includes(normalizedQuery),
     );
+  }
+
+  async getNextActions(
+    options: NextActionOptions & { status?: ApplicationStatus } = {},
+  ) {
+    let applications = await this.repository.getAll();
+    if (options.status) {
+      applications = applications.filter(
+        (application) => application.status === options.status,
+      );
+    }
+
+    return buildNextActions(applications, {
+      ...options,
+      now: options.now ?? this.now(),
+    });
+  }
+
+  async getStats() {
+    return summarizeApplications(await this.repository.getAll());
+  }
+
+  async getAll(): Promise<ApplicationData[]> {
+    return this.repository.getAll();
   }
 
   async add(input: NewApplicationInput): Promise<AddApplicationResult> {
