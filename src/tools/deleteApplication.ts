@@ -22,12 +22,14 @@ export function registerDeleteApplicationTool(server: McpServer) {
             },
           ],
         };
-      } catch (err: any) {
-        console.error(`[delete_application] ${err.message}`);
+      } catch (error: unknown) {
+        const message =
+          error instanceof Error ? error.message : "Unexpected error.";
+        console.error(`[delete_application] ${message}`);
         return {
-          content: [{ type: "text", text: `Error: ${err.message}` }],
+          content: [{ type: "text", text: `Error: ${message}` }],
         };
       }
-    }
+    },
   );
 }
