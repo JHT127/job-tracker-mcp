@@ -2,17 +2,17 @@
 
 ## Baseline
 
-The root project is a TypeScript MCP server using the MCP SDK and Zod. It registers stdio tools for adding, listing, searching, updating, deleting, and suggesting actions for job applications. The tools share `src/lib/applications.ts`, which reads and writes `data/applications.json`; a missing data file currently causes reads to fail. Existing tests use Node's built-in test runner, but the root `test` script is a placeholder and there are no root typecheck, lint, format, coverage, or build scripts. TypeScript is already configured with `strict: true`.
+The root project is a TypeScript MCP server using the MCP SDK and Zod. It registers stdio tools for adding, listing, searching, updating, deleting, and suggesting actions for job applications. The tools share `src/lib/applications.ts`, which reads and writes `data/applications.json`; a missing data file currently causes reads to fail. TypeScript is configured with `strict: true`. Phase 0 has added Vitest, ESLint, Prettier, typecheck, lint, format, coverage, and build scripts; added a compiled `dist/` package entry; and migrated the existing tests to Vitest.
 
-The dashboard is a separate Vite/React project nested under `job-tracker-dashboard/job-tracker-dashboard`. It uses a hardcoded seed, a fixed date, and browser storage; its own UI explicitly says edits do not sync with the MCP server. The docs describe both shipped tools and planned tools. The repo also contains committed application data, a 2.2 MB test-evidence PDF, and the duplicated filename `docs/blog-post-mcp-journey (2).md`. There is no `.github` directory or CI workflow. Root scripts currently include `dev`, `inspect`, and a placeholder `test`.
+The dashboard is a separate Vite/React project nested under `job-tracker-dashboard/job-tracker-dashboard`. It uses a hardcoded seed, a fixed date, and browser storage; its own UI explicitly says edits do not sync with the MCP server. The docs describe both shipped tools and planned tools. The repo also contains committed application data, a 2.2 MB test-evidence PDF, and the duplicated filename `docs/blog-post-mcp-journey (2).md`. Phase 0 now adds GitHub Actions CI on Node 22 and 24 and a Husky/lint-staged pre-commit hook. The data and documentation hygiene items remain in progress.
 
 ## Phase 0 — Baseline and Tooling
 
 - [x] Read the repository areas required by the task: `src/`, `docs/`, `data/`, `job-tracker-dashboard/`, `README.md`, and `package.json`; also reviewed examples, `SECURITY.md`, `tsconfig.json`, and ignore files. Summary recorded above.
-- [ ] Add Vitest, ESLint with typescript-eslint, and Prettier.
-- [ ] Enable TypeScript strict mode and add `tsc --noEmit` typecheck, `dist/` build, `bin` entry, and `dev`, `build`, `typecheck`, `lint`, `format`, `test`, `test:coverage`, and `inspect` scripts.
-- [ ] Add GitHub Actions CI for install, typecheck, lint, test with coverage, and build on push and pull request, using a Node LTS matrix.
-- [ ] Add Husky and lint-staged pre-commit checks.
+- [x] Add Vitest, ESLint with typescript-eslint, and Prettier.
+- [x] Keep TypeScript strict mode and add `tsc --noEmit` typecheck, `dist/` build, `bin` entry, and `dev`, `build`, `typecheck`, `lint`, `format`, `test`, `test:coverage`, and `inspect` scripts.
+- [x] Add GitHub Actions CI for install, typecheck, lint, test with coverage, and build on push and pull request, using Node 22 and 24 LTS.
+- [x] Add Husky and lint-staged pre-commit checks.
 - [ ] Clean repo hygiene: move sample records to `data/sample-data.json`, ignore `data/applications.json`, initialize the real data file from sample data on first run, and address the listed PDF, duplicated blog filename, real-looking data, duplicate README sections, and Windows-only setup instructions.
 - [ ] Gate 0: clean install, typecheck, lint, test, and build all pass in a CI-equivalent local run.
 
@@ -32,4 +32,8 @@ The dashboard is a separate Vite/React project nested under `job-tracker-dashboa
 - Baseline `npm install`: completed successfully; audit reported 0 vulnerabilities.
 - Baseline `npm run dev`: started and printed `job-application-tracker MCP server running on stdio`; stopped with Ctrl+C as requested.
 - `git status --short --branch`: clean on `upgrade/v1` before this progress file was created.
-- Phase 0 verification commands: pending implementation.
+- `npm run typecheck`: passed.
+- `npm run lint`: passed.
+- `npm run test:coverage`: passed; 2 test files and 3 tests passed; baseline line coverage 12.59% (no Phase 0 threshold).
+- `npm run build`: passed; emitted JavaScript to `dist/`.
+- Phase 0 clean-install verification (`npm ci`) and final combined gate: pending data/doc cleanup.
