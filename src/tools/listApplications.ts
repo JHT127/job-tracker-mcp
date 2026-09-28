@@ -1,6 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/server";
+
+import { getApplicationService } from "../core/runtime.js";
 import { listApplicationsInputSchema } from "../schemas/list_applications.js";
-import { listApplications } from "../lib/applications.js";
 
 export function registerListApplicationsTool(server: McpServer) {
   server.registerTool(
@@ -13,7 +14,8 @@ export function registerListApplicationsTool(server: McpServer) {
     },
     async (input) => {
       try {
-        const { applications, total, truncated } = await listApplications(input.status);
+        const { applications, total, truncated } =
+          await getApplicationService().list(input.status);
 
         return {
           content: [
@@ -27,7 +29,7 @@ export function registerListApplicationsTool(server: McpServer) {
                   truncated,
                 },
                 null,
-                2
+                2,
               ),
             },
           ],
@@ -43,6 +45,6 @@ export function registerListApplicationsTool(server: McpServer) {
           ],
         };
       }
-    }
+    },
   );
 }
