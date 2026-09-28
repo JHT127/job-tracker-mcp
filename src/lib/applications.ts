@@ -7,15 +7,47 @@ import {
 } from "../schemas/applicationData.js";
 
 const DATA_PATH = fileURLToPath(
-  new URL("../../data/applications.json", import.meta.url)
+  new URL("../../data/applications.json", import.meta.url),
 );
+const SAMPLE_DATA_PATH = fileURLToPath(
+  new URL("../../data/sample-data.json", import.meta.url),
+);
+
+function hasErrorCode(error: unknown, code: string): boolean {
+  return error instanceof Error && "code" in error && error.code === code;
+}
+
+async function readApplicationsFile(): Promise<string> {
+  try {
+    return await fs.readFile(DATA_PATH, "utf8");
+  } catch (error) {
+    if (!hasErrorCode(error, "ENOENT")) {
+      throw error;
+    }
+
+    const sampleData = await fs.readFile(SAMPLE_DATA_PATH, "utf8");
+
+    try {
+      await fs.writeFile(DATA_PATH, sampleData, {
+        encoding: "utf8",
+        flag: "wx",
+      });
+    } catch (createError) {
+      if (!hasErrorCode(createError, "EEXIST")) {
+        throw createError;
+      }
+    }
+
+    return await fs.readFile(DATA_PATH, "utf8");
+  }
+}
 
 // Maximum number of applications returned by listApplications.
 const MAX_APPLICATIONS = 50;
 
 export async function loadApplications(): Promise<ApplicationData[]> {
   try {
-    const file = await fs.readFile(DATA_PATH, "utf8");
+    const file = await readApplicationsFile();
 
     const data = JSON.parse(file);
 
@@ -27,36 +59,27 @@ export async function loadApplications(): Promise<ApplicationData[]> {
 }
 
 export async function saveApplications(
-  applications: ApplicationData[]
+  applications: ApplicationData[],
 ): Promise<void> {
-  await fs.writeFile(
-    DATA_PATH,
-    JSON.stringify(applications, null, 2),
-    "utf8"
-  );
+  await fs.writeFile(DATA_PATH, JSON.stringify(applications, null, 2), "utf8");
 }
 
 export async function addApplication(
-  application: ApplicationData
+  application: ApplicationData,
 ): Promise<ApplicationData> {
   const applications = await loadApplications();
 
-  const duplicate = applications.some(
-    (app) => app.id === application.id
-  );
+  const duplicate = applications.some((app) => app.id === application.id);
 
   if (duplicate) {
-    throw new Error(
-      `Application with id ${application.id} already exists.`
-    );
+    throw new Error(`Application with id ${application.id} already exists.`);
   }
 
   applications.push(application);
 
   applications.sort(
     (a, b) =>
-      new Date(a.date_applied).getTime() -
-      new Date(b.date_applied).getTime()
+      new Date(a.date_applied).getTime() - new Date(b.date_applied).getTime(),
   );
 
   await saveApplications(applications);
@@ -92,7 +115,7 @@ const VALID_STATUSES: ApplicationData["status"][] = [
 
 export async function updateApplicationStatus(
   id: string,
-  newStatus: ApplicationData["status"]
+  newStatus: ApplicationData["status"],
 ): Promise<ApplicationData> {
   if (!VALID_STATUSES.includes(newStatus)) {
     throw new Error(`Invalid status: ${newStatus}`);
@@ -107,9 +130,7 @@ export async function updateApplicationStatus(
   return application;
 }
 
-export async function deleteApplication(
-  id: string
-): Promise<ApplicationData> {
+export async function deleteApplication(id: string): Promise<ApplicationData> {
   const applications = await loadApplications();
 
   const index = applications.findIndex((app) => app.id === id);
@@ -126,7 +147,7 @@ export async function deleteApplication(
 }
 
 export async function listApplications(
-  status?: ApplicationData["status"]
+  status?: ApplicationData["status"],
 ): Promise<{
   applications: ApplicationData[];
   total: number;
@@ -150,12 +171,12 @@ export async function listApplications(
 }
 
 export async function searchApplications(query: string) {
-  const applications = await loadApplications(); 
+  const applications = await loadApplications();
   const q = query.trim().toLowerCase();
 
   return applications.filter(
     (app) =>
       app.company.toLowerCase().includes(q) ||
-      app.role.toLowerCase().includes(q)
+      app.role.toLowerCase().includes(q),
   );
 }
