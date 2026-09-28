@@ -81,7 +81,7 @@ export function registerGetNextActionsTool(server: McpServer) {
           statusFilter: input.status ?? null,
           total,
           truncated,
-          limit,
+          limit: effectiveLimit,
           actions,
         };
 
