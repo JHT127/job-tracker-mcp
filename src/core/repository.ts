@@ -1,4 +1,6 @@
 import type { ApplicationData } from "../schemas/applicationData.js";
+import type { ContactData } from "../schemas/contact.js";
+import type { InterviewData } from "../schemas/interview.js";
 
 export interface RepositoryMutation<T> {
   applications: ApplicationData[];
@@ -13,6 +15,32 @@ export interface ApplicationRepository {
   ): Promise<T>;
   close?(): void;
 }
+
+export interface ContactRepository {
+  getContacts(): Promise<ContactData[]>;
+  updateContacts<T>(
+    mutate: (contacts: readonly ContactData[]) => {
+      contacts: ContactData[];
+      result: T;
+      write?: boolean;
+    },
+  ): Promise<T>;
+}
+
+export interface InterviewRepository {
+  getInterviews(): Promise<InterviewData[]>;
+  updateInterviews<T>(
+    mutate: (interviews: readonly InterviewData[]) => {
+      interviews: InterviewData[];
+      result: T;
+      write?: boolean;
+    },
+  ): Promise<T>;
+}
+
+export type TrackerRepository = ApplicationRepository &
+  ContactRepository &
+  InterviewRepository;
 
 export class AsyncMutex {
   private tail: Promise<void> = Promise.resolve();
