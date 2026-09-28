@@ -2,9 +2,9 @@
 
 ## Baseline
 
-The root project is a TypeScript MCP server using the MCP SDK and Zod. It registers stdio tools for adding, listing, searching, updating, deleting, and suggesting actions for job applications. The tools share `src/lib/applications.ts`; the runtime `data/applications.json` is now created from the anonymized `data/sample-data.json` when missing, and the runtime file is ignored by Git. TypeScript is configured with `strict: true`. Phase 0 has added Vitest, ESLint, Prettier, typecheck, lint, format, coverage, and build scripts; added a compiled `dist/` package entry; and migrated the existing tests to Vitest.
+The root project is a TypeScript MCP server using the MCP SDK and Zod. Its stdio tools now use a shared `src/core/` application service, backed by atomic/mutex-protected JSON storage or transactional SQLite storage. Legacy records normalize to `updated_at` and status history; SQLite imports an existing JSON file on first initialization and is the default `STORAGE` backend. TypeScript is configured with `strict: true`. Phase 0 added Vitest, ESLint, Prettier, typecheck, lint, format, coverage, build, and a compiled `dist/` package entry.
 
-The dashboard is a separate Vite/React project nested under `job-tracker-dashboard/job-tracker-dashboard`. It uses a hardcoded seed, a fixed date, and browser storage; its own UI explicitly says edits do not sync with the MCP server. The docs describe both shipped tools and planned tools. Phase 0 removes the 2.2 MB test-evidence PDF, renames the duplicated blog file, corrects data-storage docs, and removes duplicate README instructions while adding macOS/Linux setup. Phase 0 also adds GitHub Actions CI on Node 22 and 24 and a Husky/lint-staged pre-commit hook.
+The dashboard is a separate Vite/React project nested under `job-tracker-dashboard/job-tracker-dashboard`. Its clock is injectable and it now maintains `updated_at`/status history in browser storage, but it still uses seeded browser data and does not sync with the MCP server; that connection is documented as dependent on the Phase 3 REST API and Phase 5 dashboard work. Phase 0 removes the 2.2 MB test-evidence PDF, renames the duplicate blog file, corrects data-storage docs, and adds cross-platform README setup. Phase 0 also added GitHub Actions CI on Node 22 and 24 and a Husky/lint-staged pre-commit hook.
 
 ## Phase 0 — Baseline and Tooling
 
@@ -13,7 +13,7 @@ The dashboard is a separate Vite/React project nested under `job-tracker-dashboa
 - [done] Keep TypeScript strict mode and add `tsc --noEmit` typecheck, `dist/` build, `bin` entry, and `dev`, `build`, `typecheck`, `lint`, `format`, `test`, `test:coverage`, and `inspect` scripts.
 - [done] Add GitHub Actions CI for install, typecheck, lint, test with coverage, and build on push and pull request, using Node 22 and 24 LTS.
 - [done] Add Husky and lint-staged pre-commit checks.
-- [done] Fix the strict-compile/lint blockers found in existing handlers: use the computed next-action limit, return its constructed response, and narrow caught errors from `any` to `unknown`. Broader Phase 1 fixes and regression coverage remain pending.
+- [done] Fix the strict-compile/lint blockers found in existing handlers: use the computed next-action limit, return its constructed response, and narrow caught errors from `any` to `unknown`.
 - [done] Move anonymized sample records to `data/sample-data.json`.
 - [done] Ignore `data/applications.json` and stop tracking its previous committed contents.
 - [done] Initialize missing runtime data from the sample on first read, using exclusive file creation.
@@ -23,14 +23,15 @@ The dashboard is a separate Vite/React project nested under `job-tracker-dashboa
 
 ## Later Phases — Not Started
 
-- [in-progress] Phase 1: implement shared core, repositories, model migration, MCP tool changes, and Gate 1 tests.
-- [todo] Phase 1 task: fix remaining known bugs with regression coverage (in particular injected clock, status history/timestamps, and excluding terminal statuses from follow-up actions).
-- [todo] Phase 1 task: add pure `src/core/` application service, repository interface, next-actions engine, and stats; route MCP tools through the core.
-- [todo] Phase 1 task: add atomic/mutex-protected JSON repository and SQLite repository; select with `STORAGE=json|sqlite` (SQLite default) and safely import existing JSON.
-- [todo] Phase 1 task: extend the application model with `updated_at`, `history`, salary, location, work mode, job URL, priority, tags, deadline, and resume version while retaining legacy records.
-- [todo] Phase 1 task: add `update_application`, `undo_last_change`, duplicate warnings, and confirmed deletion.
-- [todo] Phase 1 task: test legacy data migration and reach at least 90% line coverage in `src/core/`.
-- [todo] Gate 1: core coverage threshold, regression tests, and old-format migration tests all pass.
+- [done] Refactor the MCP handlers through the storage-independent `src/core/` service, repository interface, next-actions engine, and stats.
+- [done] Add atomic/mutex-protected JSON storage and transactional SQLite storage; select with `STORAGE=json|sqlite` (SQLite default), import legacy JSON, and ignore runtime database files.
+- [done] Extend application records with `updated_at`, `history`, salary, location, work mode, job URL, priority, tags, deadline, and resume version; normalize legacy records.
+- [done] Add `update_application`, `undo_last_change`, duplicate warnings, and confirmed deletion while preserving existing tool names and update-status inputs.
+- [done] Fix the fixed server/dashboard clock, compute follow-up from `updated_at`, exclude terminal statuses, and score actions by age/status/source/deadline/priority with an injected clock.
+- [done] Add regression tests for the next-actions response/limit bug, model history and timestamps, atomic/concurrent storage, SQLite/JSON migration, and service workflows.
+- [done] Enforce at least 90% line coverage for `src/core/`; current gated coverage is recorded below.
+- [todo] Connect dashboard data to the shared service through the planned REST API (Phase 3/5 dependency; see `docs/decisions.md`).
+- [in-progress] Gate 1: run clean install, typecheck, lint, full tests with coverage, build, and verify old-format migration before marking complete.
 - [todo] Phase 2: implement the specified MCP tools, resources, prompts, transports, and end-to-end coverage; meet Gate 2.
 - [todo] Phase 3: implement the REST API, auth, validation, rate limiting, logging, OpenAPI, webhooks, and integration tests; meet Gate 3.
 - [todo] Phase 4: implement credential-backed integrations behind interfaces with mocks and setup docs; ensure zero-credential startup; meet Gate 4.
