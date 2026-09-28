@@ -2,8 +2,10 @@
 import { fileURLToPath } from "node:url";
 
 import {
+  applicationDataSchema,
   applicationsDataSchema,
   ApplicationData,
+  ApplicationDataInput,
 } from "../schemas/applicationData.js";
 
 const DATA_PATH = fileURLToPath(
@@ -65,17 +67,22 @@ export async function saveApplications(
 }
 
 export async function addApplication(
-  application: ApplicationData,
+  application: ApplicationDataInput,
 ): Promise<ApplicationData> {
   const applications = await loadApplications();
+  const normalizedApplication = applicationDataSchema.parse(application);
 
-  const duplicate = applications.some((app) => app.id === application.id);
+  const duplicate = applications.some(
+    (app) => app.id === normalizedApplication.id,
+  );
 
   if (duplicate) {
-    throw new Error(`Application with id ${application.id} already exists.`);
+    throw new Error(
+      `Application with id ${normalizedApplication.id} already exists.`,
+    );
   }
 
-  applications.push(application);
+  applications.push(normalizedApplication);
 
   applications.sort(
     (a, b) =>
@@ -84,7 +91,7 @@ export async function addApplication(
 
   await saveApplications(applications);
 
-  return application;
+  return normalizedApplication;
 }
 
 export async function generateApplicationId(): Promise<string> {
