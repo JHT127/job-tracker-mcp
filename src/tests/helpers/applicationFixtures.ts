@@ -4,9 +4,11 @@ import type {
   ApplicationDataInput,
 } from "../../schemas/applicationData.js";
 import type {
-  ApplicationRepository,
   RepositoryMutation,
+  TrackerRepository,
 } from "../../core/repository.js";
+import type { ContactData } from "../../schemas/contact.js";
+import type { InterviewData } from "../../schemas/interview.js";
 
 export function makeApplication(
   overrides: Partial<ApplicationDataInput> = {},
@@ -23,8 +25,12 @@ export function makeApplication(
   });
 }
 
-export class MemoryRepository implements ApplicationRepository {
-  constructor(private applications: ApplicationData[] = []) {}
+export class MemoryRepository implements TrackerRepository {
+  constructor(
+    private applications: ApplicationData[] = [],
+    private contacts: ContactData[] = [],
+    private interviews: InterviewData[] = [],
+  ) {}
 
   async getAll(): Promise<ApplicationData[]> {
     return structuredClone(this.applications);
@@ -36,6 +42,42 @@ export class MemoryRepository implements ApplicationRepository {
     const mutation = mutate(structuredClone(this.applications));
     if (mutation.write !== false) {
       this.applications = structuredClone(mutation.applications);
+    }
+    return mutation.result;
+  }
+
+  async getContacts(): Promise<ContactData[]> {
+    return structuredClone(this.contacts);
+  }
+
+  async updateContacts<T>(
+    mutate: (contacts: readonly ContactData[]) => {
+      contacts: ContactData[];
+      result: T;
+      write?: boolean;
+    },
+  ): Promise<T> {
+    const mutation = mutate(structuredClone(this.contacts));
+    if (mutation.write !== false) {
+      this.contacts = structuredClone(mutation.contacts);
+    }
+    return mutation.result;
+  }
+
+  async getInterviews(): Promise<InterviewData[]> {
+    return structuredClone(this.interviews);
+  }
+
+  async updateInterviews<T>(
+    mutate: (interviews: readonly InterviewData[]) => {
+      interviews: InterviewData[];
+      result: T;
+      write?: boolean;
+    },
+  ): Promise<T> {
+    const mutation = mutate(structuredClone(this.interviews));
+    if (mutation.write !== false) {
+      this.interviews = structuredClone(mutation.interviews);
     }
     return mutation.result;
   }
