@@ -1,9 +1,10 @@
 import { expect, test } from "vitest";
 
+import { applicationsDataSchema } from "../schemas/applicationData.js";
 import { buildNextActions } from "./getNextActions.js";
 
 test("buildNextActions flags stale applications and recent status changes", () => {
-  const applications = [
+  const applications = applicationsDataSchema.parse([
     {
       id: "app-1",
       company: "Orion VLSI Technologies",
@@ -22,7 +23,7 @@ test("buildNextActions flags stale applications and recent status changes", () =
       source: "referral" as const,
       notes: "Interview scheduled",
     },
-  ];
+  ]);
 
   const actions = buildNextActions(applications);
 
