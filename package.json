@@ -29,7 +29,7 @@
   "license": "ISC",
   "dependencies": {
     "@modelcontextprotocol/server": "^2.0.0-beta.5",
-    "better-sqlite3": "^13.0.3",
+    "better-sqlite3": "11.10.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
