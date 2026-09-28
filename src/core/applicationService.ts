@@ -30,10 +30,22 @@ type EditableField =
   | "deadline"
   | "resume_version";
 
-export type NewApplicationInput = Omit<
+export type NewApplicationInput = Pick<
   ApplicationDataInput,
-  "id" | "updated_at" | "history" | "undo_stack"
->;
+  "company" | "role" | "date_applied"
+> &
+  Partial<
+    Omit<
+      ApplicationDataInput,
+      | "id"
+      | "company"
+      | "role"
+      | "date_applied"
+      | "updated_at"
+      | "history"
+      | "undo_stack"
+    >
+  >;
 
 export type UpdateApplicationInput = Partial<
   Pick<ApplicationData, EditableField>
