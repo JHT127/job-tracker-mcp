@@ -123,4 +123,51 @@ describe("JsonFileRepository", () => {
 
     await expect(repository.getAll()).rejects.toThrow();
   });
+
+  it("persists contacts and interviews in their own atomic collections", async () => {
+    await fs.writeFile(samplePath, "[]", "utf8");
+    const first = new JsonFileRepository({ dataPath, samplePath });
+    await first.getAll();
+    await first.updateContacts(() => ({
+      contacts: [
+        {
+          id: "con-001",
+          person: "Alex Example",
+          company: "Example Labs",
+          notes: "Met at a conference",
+          application_ids: ["app-001"],
+        },
+      ],
+      result: undefined,
+    }));
+    await first.updateInterviews(() => ({
+      interviews: [
+        {
+          id: "int-001",
+          application_id: "app-001",
+          date: "2026-08-02T15:00:00.000Z",
+          type: "technical",
+          prep_notes: "Review the system design",
+        },
+      ],
+      result: undefined,
+    }));
+
+    const reopened = new JsonFileRepository({ dataPath, samplePath });
+
+    expect(await reopened.getContacts()).toMatchObject([
+      { id: "con-001", person: "Alex Example", application_ids: ["app-001"] },
+    ]);
+    expect(await reopened.getInterviews()).toMatchObject([
+      { id: "int-001", application_id: "app-001", type: "technical" },
+    ]);
+  });
+
+  it("returns empty contact/interview collections when their files are absent", async () => {
+    await fs.writeFile(samplePath, "[]", "utf8");
+    const repository = new JsonFileRepository({ dataPath, samplePath });
+
+    expect(await repository.getContacts()).toEqual([]);
+    expect(await repository.getInterviews()).toEqual([]);
+  });
 });
