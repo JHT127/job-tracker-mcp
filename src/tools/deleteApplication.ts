@@ -1,6 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/server";
+
+import { getApplicationService } from "../core/runtime.js";
 import { deleteApplicationInputSchema } from "../schemas/deleteApplication.js";
-import { deleteApplication } from "../lib/applications.js";
 
 export function registerDeleteApplicationTool(server: McpServer) {
   server.registerTool(
@@ -8,12 +9,15 @@ export function registerDeleteApplicationTool(server: McpServer) {
     {
       title: "Delete Job Application",
       description:
-        "Deletes an existing application by its ID. Use when the user wants to remove a record (e.g. duplicate or added by mistake).",
+        "Permanently deletes an application after the user confirms by setting confirm to true.",
       inputSchema: deleteApplicationInputSchema,
     },
     async (input) => {
       try {
-        const deleted = await deleteApplication(input.id);
+        const deleted = await getApplicationService().delete(
+          input.id,
+          input.confirm,
+        );
         return {
           content: [
             {
