@@ -1,6 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/server";
 
-import { searchApplications } from "../lib/applications.js";
+import { getApplicationService } from "../core/runtime.js";
 
 import { searchApplicationsInputSchema } from "../schemas/searchApplications.js";
 
@@ -18,7 +18,7 @@ export function registerSearchApplicationsTool(server: McpServer) {
 
     async (input) => {
       try {
-        const results = await searchApplications(input.query);
+        const results = await getApplicationService().search(input.query);
 
         return {
           content: [
@@ -48,6 +48,6 @@ export function registerSearchApplicationsTool(server: McpServer) {
           ],
         };
       }
-    }
+    },
   );
 }
