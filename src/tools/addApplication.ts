@@ -1,65 +1,39 @@
 import { McpServer } from "@modelcontextprotocol/server";
 
-import {
-  addApplication,
-  generateApplicationId,
-} from "../lib/applications.js";
+import { getApplicationService } from "../core/runtime.js";
+import { addApplicationInputSchema } from "../schemas/addApplication.js";
 
-import {
-  addApplicationInputSchema,
-} from "../schemas/addApplication.js";
-
-
-export function registerAddApplicationTool(
-  server: McpServer
-) {
+export function registerAddApplicationTool(server: McpServer) {
   server.registerTool(
     "add_application",
     {
       title: "Add Job Application",
-
-      description:
-        "Add a new job application record to the tracker.",
-
+      description: "Add a new job application record to the tracker.",
       inputSchema: addApplicationInputSchema,
     },
-
     async (input) => {
       try {
-        const newId = await generateApplicationId();
-
-
-        const application = await addApplication({
-          id: newId,
-          company: input.company,
-          role: input.role,
-          date_applied: input.date_applied,
-          status: input.status,
-          source: input.source,
-          notes: input.notes ?? "",
-        });
-
+        const result = await getApplicationService().add(input);
+        const warning = result.duplicateWarning
+          ? `Warning: ${result.duplicateWarning}\n\n`
+          : "";
 
         return {
           content: [
             {
               type: "text",
-
               text:
-                `Application added successfully.\n\n` +
-                JSON.stringify(application, null, 2),
+                `${warning}Application added successfully.\n\n` +
+                JSON.stringify(result.application, null, 2),
             },
           ],
         };
-      } catch (error) {
+      } catch (error: unknown) {
         console.error("[add_application]", error);
-
-
         return {
           content: [
             {
               type: "text",
-
               text:
                 error instanceof Error
                   ? error.message
@@ -68,6 +42,6 @@ export function registerAddApplicationTool(
           ],
         };
       }
-    }
+    },
   );
 }
