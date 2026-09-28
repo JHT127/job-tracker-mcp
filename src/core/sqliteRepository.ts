@@ -46,9 +46,14 @@ export class SqliteRepository implements ApplicationRepository {
 
     mkdirSync(dirname(databasePath), { recursive: true });
     this.database = new Database(databasePath);
-    this.database.pragma("journal_mode = WAL");
-    this.applyMigrations();
-    this.importInitialData(legacyDataPath, samplePath);
+    try {
+      this.database.pragma("journal_mode = WAL");
+      this.applyMigrations();
+      this.importInitialData(legacyDataPath, samplePath);
+    } catch (error) {
+      this.database.close();
+      throw error;
+    }
   }
 
   async getAll(): Promise<ApplicationData[]> {
