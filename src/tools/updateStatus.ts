@@ -1,6 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/server";
+
+import { getApplicationService } from "../core/runtime.js";
 import { updateStatusInputSchema } from "../schemas/updateStatus.js";
-import { updateApplicationStatus } from "../lib/applications.js";
 
 export function registerUpdateStatusTool(server: McpServer) {
   server.registerTool(
@@ -12,7 +13,7 @@ export function registerUpdateStatusTool(server: McpServer) {
     },
     async (input) => {
       try {
-        const updated = await updateApplicationStatus(
+        const updated = await getApplicationService().updateStatus(
           input.id,
           input.new_status,
         );
