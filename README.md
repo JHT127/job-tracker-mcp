@@ -17,6 +17,10 @@ Application data is stored locally in:
 ./data/applications.json
 ```
 
+On first use, the server creates this ignored runtime file from the fictional
+records in `./data/sample-data.json`. The sample remains tracked; your
+application records do not.
+
 The project does not require external APIs, databases, API keys, or network services.
 
 Built as part of [NextFlows Academy](https://nextflows.ai/academy/portal/dashboard?cohort=ac421725-af45-4094-a108-f8485d13fe67) — Building MCP AI Engines program.
@@ -436,6 +440,10 @@ Application data is stored in a local JSON file:
 ./data/applications.json
 ```
 
+If the runtime file is missing, the server initializes it from
+`./data/sample-data.json`. The runtime file is ignored by Git so personal
+application records are not committed.
+
 Example application:
 
 ```json
@@ -491,7 +499,8 @@ Example conversations showing the server in use with a model are in [`examples/c
 ```text
 my-first-mcp/
 ├── data/
-│   └── applications.json
+│   ├── applications.json  # created locally on first use; ignored by Git
+│   └── sample-data.json   # fictional starter records
 │
 ├── docs/
 │   ├── data-plan.md
