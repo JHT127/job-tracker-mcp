@@ -13,12 +13,13 @@ The dashboard is a separate Vite/React project nested under `job-tracker-dashboa
 - [done] Keep TypeScript strict mode and add `tsc --noEmit` typecheck, `dist/` build, `bin` entry, and `dev`, `build`, `typecheck`, `lint`, `format`, `test`, `test:coverage`, and `inspect` scripts.
 - [done] Add GitHub Actions CI for install, typecheck, lint, test with coverage, and build on push and pull request, using Node 22 and 24 LTS.
 - [done] Add Husky and lint-staged pre-commit checks.
+- [done] Fix the strict-compile/lint blockers found in existing handlers: use the computed next-action limit, return its constructed response, and narrow caught errors from `any` to `unknown`. Broader Phase 1 fixes and regression coverage remain pending.
 - [done] Move anonymized sample records to `data/sample-data.json`.
 - [done] Ignore `data/applications.json` and stop tracking its previous committed contents.
 - [done] Initialize missing runtime data from the sample on first read, using exclusive file creation.
 - [done] Remove the 2.2 MB PDF and rename the duplicate blog filename.
 - [done] Remove duplicate README instructions and add setup guidance for macOS and Linux alongside Windows; update docs for sample/runtime data behavior.
-- [todo] Gate 0: clean install, typecheck, lint, test, and build all pass in a CI-equivalent local run.
+- [done] Gate 0: clean install, typecheck, lint, test with coverage, and build all pass in a CI-equivalent local run.
 
 ## Later Phases — Not Started
 
@@ -40,8 +41,14 @@ The dashboard is a separate Vite/React project nested under `job-tracker-dashboa
 - `npm run lint`: passed.
 - `npm run test:coverage`: passed; 2 test files and 3 tests passed; current line coverage 12.32% (no Phase 0 threshold).
 - `npm run build`: passed; emitted JavaScript to `dist/`.
+- Final Gate 0 `npm ci`: passed; 154 packages audited, 0 vulnerabilities; Husky `prepare` ran.
+- Final Gate 0 `npm run typecheck`: passed.
+- Final Gate 0 `npm run lint`: passed with zero warnings.
+- Final Gate 0 `npm run test:coverage`: passed; 2 test files and 3 tests passed; 12.32% line coverage.
+- Final Gate 0 `npm run build`: passed.
+- `npm test`: passed; 2 test files and 3 tests passed.
 - `node --import tsx --input-type=module -e "import { promises as fs } from 'node:fs'; import { loadApplications } from './src/lib/applications.ts'; const apps = await loadApplications(); const disk = JSON.parse(await fs.readFile('data/applications.json', 'utf8')); if (apps.length !== 2) throw new Error('wrong loaded row count'); if (disk.length !== 2) throw new Error('wrong disk row count'); if (apps[0].company !== 'Example Labs') throw new Error('wrong sample data'); console.log('missing data file initialized from sample data');"`: passed; missing runtime file was created from the sample.
 - `git check-ignore -v data/applications.json`: passed; `.gitignore:9` excludes the generated runtime file.
 - `git diff --check -- README.md` and `git diff --check -- docs/data-plan.md`: passed; targeted documentation edits have no whitespace errors.
 - `npx prettier --check .github/workflows/ci.yml`: passed.
-- Phase 0 clean-install verification (`npm ci`) and final combined gate: pending.
+- `git status --short --branch`: clean on `upgrade/v1` after Gate 0.
