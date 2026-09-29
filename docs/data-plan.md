@@ -23,12 +23,12 @@ in `docs/design.md`.
 
 ## Data Plan Table
 
-| tool                | source                 | fixture path                          | auth | failure modes                                                                                                                                                                                                                |
-| ------------------- | ---------------------- | ------------------------------------- | ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `add_application`   | `ApplicationRepository` | SQLite or JSON repository             | none | sample missing/unreadable; malformed legacy JSON; duplicate company/role warning; invalid `date_applied`; concurrent updates                                                                                                 |
-| `update_status`     | `ApplicationRepository` | SQLite or JSON repository             | none | `id` not found; invalid `new_status`; database/file unavailable; invalid stored record                                                                                                                                       |
-| `list_applications` | `ApplicationRepository` | SQLite or JSON repository             | none | sample missing on first use; empty store; malformed JSON or database record; invalid `status` filter                                                                                                                         |
-| `get_next_actions`  | `ApplicationRepository` | SQLite or JSON repository             | none | sample missing on first use; malformed date in stored record; timezone/date boundary; no matching action (valid empty state); large store should degrade gracefully                                                           |
+| tool                | source                  | fixture path              | auth | failure modes                                                                                                                                                       |
+| ------------------- | ----------------------- | ------------------------- | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `add_application`   | `ApplicationRepository` | SQLite or JSON repository | none | sample missing/unreadable; malformed legacy JSON; duplicate company/role warning; invalid `date_applied`; concurrent updates                                        |
+| `update_status`     | `ApplicationRepository` | SQLite or JSON repository | none | `id` not found; invalid `new_status`; database/file unavailable; invalid stored record                                                                              |
+| `list_applications` | `ApplicationRepository` | SQLite or JSON repository | none | sample missing on first use; empty store; malformed JSON or database record; invalid `status` filter                                                                |
+| `get_next_actions`  | `ApplicationRepository` | SQLite or JSON repository | none | sample missing on first use; malformed date in stored record; timezone/date boundary; no matching action (valid empty state); large store should degrade gracefully |
 
 ## Example Responses (happy path)
 
