@@ -14,7 +14,8 @@ function textFrom(result: ToolResult): string {
 
 describe("MCP tool client workflow", () => {
   it("lists and invokes every registered tool through the official client", async () => {
-    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+    const [clientTransport, serverTransport] =
+      InMemoryTransport.createLinkedPair();
     const server = createServer();
     const client = new Client({ name: "e2e-test-client", version: "1.0.0" });
 
@@ -26,8 +27,13 @@ describe("MCP tool client workflow", () => {
     expect(toolNames).toHaveLength(25);
 
     const invoke = async (name: string, args: Record<string, unknown> = {}) => {
-      const result = (await client.callTool({ name, arguments: args })) as ToolResult;
-      expect(result.isError ?? false, `${name} returned an MCP error`).toBe(false);
+      const result = (await client.callTool({
+        name,
+        arguments: args,
+      })) as ToolResult;
+      expect(result.isError ?? false, `${name} returned an MCP error`).toBe(
+        false,
+      );
       return result;
     };
 
@@ -38,7 +44,9 @@ describe("MCP tool client workflow", () => {
       date_applied: today,
       source: "referral",
     });
-    const addedApplication = JSON.parse(textFrom(added).split("\n\n").pop() ?? "{}");
+    const addedApplication = JSON.parse(
+      textFrom(added).split("\n\n").pop() ?? "{}",
+    );
     const applicationId = addedApplication.id as string;
 
     const contact = await invoke("add_contact", {
@@ -50,8 +58,14 @@ describe("MCP tool client workflow", () => {
 
     await invoke("list_applications");
     await invoke("search_applications", { query: "E2E" });
-    await invoke("update_application", { id: applicationId, notes: "Updated by E2E" });
-    await invoke("update_status", { id: applicationId, new_status: "interview" });
+    await invoke("update_application", {
+      id: applicationId,
+      notes: "Updated by E2E",
+    });
+    await invoke("update_status", {
+      id: applicationId,
+      new_status: "interview",
+    });
     await invoke("undo_last_change", { id: applicationId });
     await invoke("delete_application", { id: applicationId, confirm: true });
     await invoke("get_next_actions", { limit: 5 });
