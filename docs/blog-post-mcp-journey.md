@@ -30,4 +30,4 @@ Every step returned PASS: the new record appeared after Add, the status change w
 
 ## Result
 
-Full project, including the MCP server and dashboard: **https://github.com/JHT127/my-first-mcp**
+Full project, including the MCP server and dashboard: **https://github.com/JHT127/job-tracker-mcp**
