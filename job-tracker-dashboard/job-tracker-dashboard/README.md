@@ -1,16 +1,36 @@
-# React + Vite
+# Job Tracker Dashboard
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+The React dashboard for [Job Tracker MCP](https://github.com/JHT127/job-tracker-mcp).
 
-Currently, two official plugins are available:
+## Live demo
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Open the hosted demo:
 
-## React Compiler
+https://jht127.github.io/job-tracker-mcp/
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+The hosted build uses `VITE_DEMO=true` with fictional in-memory data. It does not require backend access or credentials.
 
-## Expanding the Oxlint configuration
+## Local development
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and Oxlint's TypeScript related rules in your project.
+```bash
+npm ci
+npm run dev
+```
+
+For the production build used by GitHub Pages:
+
+```bash
+npm run build
+```
+
+The dashboard uses the REST API when `VITE_API_URL` is configured. It falls back to demo data when `VITE_DEMO=true` or the API is unavailable.
+
+## Verification
+
+```bash
+npm test
+npm run lint
+npm run build
+```
+
+The main project documentation is in the repository root [README.md](../../README.md). The hosted-demo walkthrough is in [docs/demo-script.md](../../docs/demo-script.md).
