@@ -1,4 +1,5 @@
 import { promises as fs } from "node:fs";
+import Database from "better-sqlite3";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -148,6 +149,73 @@ describe("SqliteRepository", () => {
     expect((await reopened.getAll())[0].notes).toBe(
       "database is authoritative",
     );
+    reopened.close();
+  });
+
+  it("migrates an existing version-one database to contacts and interviews", async () => {
+    const oldDatabase = new Database(databasePath);
+    oldDatabase.exec(
+      "CREATE TABLE applications (id TEXT PRIMARY KEY NOT NULL, data TEXT NOT NULL);",
+    );
+    oldDatabase.pragma("user_version = 1");
+    oldDatabase.close();
+    await fs.writeFile(samplePath, "[]", "utf8");
+
+    const repository = new SqliteRepository({
+      databasePath,
+      legacyDataPath,
+      samplePath,
+    });
+
+    expect(await repository.getContacts()).toEqual([]);
+    expect(await repository.getInterviews()).toEqual([]);
+    repository.close();
+  });
+
+  it("persists contacts and interviews across database reopen", async () => {
+    await fs.writeFile(samplePath, "[]", "utf8");
+    const first = new SqliteRepository({
+      databasePath,
+      legacyDataPath,
+      samplePath,
+    });
+    await first.updateContacts(() => ({
+      contacts: [
+        {
+          id: "con-001",
+          person: "Alex Example",
+          company: "Example Labs",
+          notes: "Met at a conference",
+          application_ids: ["app-001"],
+        },
+      ],
+      result: undefined,
+    }));
+    await first.updateInterviews(() => ({
+      interviews: [
+        {
+          id: "int-001",
+          application_id: "app-001",
+          date: "2026-08-02T15:00:00.000Z",
+          type: "technical",
+          prep_notes: "Review the system design",
+        },
+      ],
+      result: undefined,
+    }));
+    first.close();
+
+    const reopened = new SqliteRepository({
+      databasePath,
+      legacyDataPath,
+      samplePath,
+    });
+    expect(await reopened.getContacts()).toMatchObject([
+      { id: "con-001", person: "Alex Example", application_ids: ["app-001"] },
+    ]);
+    expect(await reopened.getInterviews()).toMatchObject([
+      { id: "int-001", application_id: "app-001", type: "technical" },
+    ]);
     reopened.close();
   });
 });
