@@ -129,7 +129,7 @@ function App() {
     import.meta.env.VITE_DEMO === "true",
   );
 
-  const now = useMemo(() => new Date("2026-08-24T00:00:00Z"), []);
+  const now = new Date();
   const strings = {
     en: {
       title: "Job Application Tracker",
