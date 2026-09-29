@@ -1,6 +1,6 @@
 # Job Tracker MCP
 
-[![CI](https://github.com/JHT127/my-first-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/JHT127/my-first-mcp/actions/workflows/ci.yml) [![License: ISC](https://img.shields.io/badge/license-ISC-blue.svg)](LICENSE) [![npm](https://img.shields.io/npm/v/job-tracker-mcp.svg)](https://www.npmjs.com/package/job-tracker-mcp)
+[![CI](https://github.com/JHT127/job-tracker-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/JHT127/job-tracker-mcp/actions/workflows/ci.yml) [![License: ISC](https://img.shields.io/badge/license-ISC-blue.svg)](LICENSE) [![npm](https://img.shields.io/npm/v/job-tracker-mcp.svg)](https://www.npmjs.com/package/job-tracker-mcp)
 
 A local-first MCP server for tracking applications, contacts, interviews, follow-ups, and career workflows from Claude or any compatible MCP client.
 
@@ -101,7 +101,7 @@ Important environment variables:
 
 ## Dashboard
 
-Live demo: https://jht127.github.io/my-first-mcp/
+Live demo: https://jht127.github.io/job-tracker-mcp/
 
 ```bash
 cd job-tracker-dashboard/job-tracker-dashboard
