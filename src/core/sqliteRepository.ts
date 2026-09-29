@@ -8,10 +8,11 @@ import {
   applicationsDataSchema,
 } from "../schemas/applicationData.js";
 import type { ApplicationData } from "../schemas/applicationData.js";
-import type {
-  ApplicationRepository,
-  RepositoryMutation,
-} from "./repository.js";
+import { contactDataSchema } from "../schemas/contact.js";
+import type { ContactData } from "../schemas/contact.js";
+import { interviewDataSchema } from "../schemas/interview.js";
+import type { InterviewData } from "../schemas/interview.js";
+import type { RepositoryMutation, TrackerRepository } from "./repository.js";
 
 export interface SqliteRepositoryOptions {
   databasePath?: string;
@@ -34,7 +35,7 @@ function parseApplications(contents: string): ApplicationData[] {
   return applicationsDataSchema.parse(parsed);
 }
 
-export class SqliteRepository implements ApplicationRepository {
+export class SqliteRepository implements TrackerRepository {
   private readonly database: Database.Database;
 
   constructor(options: SqliteRepositoryOptions = {}) {
@@ -74,6 +75,60 @@ export class SqliteRepository implements ApplicationRepository {
     return transaction();
   }
 
+  async getContacts(): Promise<ContactData[]> {
+    return this.readCollection("contacts", (data) =>
+      contactDataSchema.parse(data),
+    );
+  }
+
+  async updateContacts<T>(
+    mutate: (contacts: readonly ContactData[]) => {
+      contacts: ContactData[];
+      result: T;
+      write?: boolean;
+    },
+  ): Promise<T> {
+    const transaction = this.database.transaction(() => {
+      const mutation = mutate(
+        this.readCollection("contacts", (data) =>
+          contactDataSchema.parse(data),
+        ),
+      );
+      if (mutation.write !== false) {
+        this.writeCollection("contacts", mutation.contacts);
+      }
+      return mutation.result;
+    });
+    return transaction();
+  }
+
+  async getInterviews(): Promise<InterviewData[]> {
+    return this.readCollection("interviews", (data) =>
+      interviewDataSchema.parse(data),
+    );
+  }
+
+  async updateInterviews<T>(
+    mutate: (interviews: readonly InterviewData[]) => {
+      interviews: InterviewData[];
+      result: T;
+      write?: boolean;
+    },
+  ): Promise<T> {
+    const transaction = this.database.transaction(() => {
+      const mutation = mutate(
+        this.readCollection("interviews", (data) =>
+          interviewDataSchema.parse(data),
+        ),
+      );
+      if (mutation.write !== false) {
+        this.writeCollection("interviews", mutation.interviews);
+      }
+      return mutation.result;
+    });
+    return transaction();
+  }
+
   close(): void {
     this.database.close();
   }
@@ -91,6 +146,20 @@ export class SqliteRepository implements ApplicationRepository {
         );
       `);
       this.database.pragma("user_version = 1");
+    }
+
+    if (currentVersion < 2) {
+      this.database.exec(`
+        CREATE TABLE IF NOT EXISTS contacts (
+          id TEXT PRIMARY KEY NOT NULL,
+          data TEXT NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS interviews (
+          id TEXT PRIMARY KEY NOT NULL,
+          data TEXT NOT NULL
+        );
+      `);
+      this.database.pragma("user_version = 2");
     }
   }
 
@@ -131,6 +200,31 @@ export class SqliteRepository implements ApplicationRepository {
 
     for (const application of applications) {
       insert.run(application.id, JSON.stringify(application));
+    }
+  }
+
+  private readCollection<T>(
+    table: "contacts" | "interviews",
+    parse: (data: unknown) => T,
+  ): T[] {
+    const rows = this.database
+      .prepare(`SELECT data FROM ${table} ORDER BY id`)
+      .all() as Array<{ data: string }>;
+
+    return rows.map((row) => parse(JSON.parse(row.data)));
+  }
+
+  private writeCollection<T extends { id: string }>(
+    table: "contacts" | "interviews",
+    records: T[],
+  ): void {
+    this.database.prepare(`DELETE FROM ${table}`).run();
+    const insert = this.database.prepare(
+      `INSERT INTO ${table} (id, data) VALUES (?, ?)`,
+    );
+
+    for (const record of records) {
+      insert.run(record.id, JSON.stringify(record));
     }
   }
 }
