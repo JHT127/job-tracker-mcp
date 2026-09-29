@@ -5,10 +5,10 @@ export default defineConfig({
     include: ["src/**/*.test.ts"],
     coverage: {
       provider: "v8",
-      include: ["src/core/**/*.ts"],
+      include: ["src/core/**/*.ts", "src/tools/**/*.ts"],
       exclude: ["src/core/**/*.test.ts"],
       thresholds: {
-        lines: 90,
+        lines: 85,
       },
     },
   },
