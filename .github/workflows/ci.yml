@@ -37,3 +37,9 @@ jobs:
 
       - name: build
         run: npm run build
+
+      - name: generate tool reference
+        run: npm run generate:tools
+
+      - name: check generated tool reference
+        run: npm run check:tools
