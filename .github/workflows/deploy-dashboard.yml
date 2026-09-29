@@ -1,0 +1,59 @@
+name: deploy-dashboard
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "job-tracker-dashboard/job-tracker-dashboard/**"
+      - ".github/workflows/deploy-dashboard.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+
+      - name: setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          cache: npm
+          cache-dependency-path: job-tracker-dashboard/job-tracker-dashboard/package-lock.json
+
+      - name: install dashboard
+        run: npm ci --prefix job-tracker-dashboard/job-tracker-dashboard
+
+      - name: test dashboard
+        run: npm test --prefix job-tracker-dashboard/job-tracker-dashboard
+
+      - name: build hosted demo
+        run: npm run build --prefix job-tracker-dashboard/job-tracker-dashboard
+        env:
+          VITE_DEMO: "true"
+
+      - name: upload pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: job-tracker-dashboard/job-tracker-dashboard/dist
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
