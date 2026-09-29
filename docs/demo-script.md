@@ -196,7 +196,7 @@ update_status
 
 ## Hosted dashboard walkthrough
 
-Open https://jht127.github.io/my-first-mcp/ and verify:
+Open https://jht127.github.io/job-tracker-mcp/ and verify:
 
 - Dashboard overview with populated application cards.
 - Timeline view showing status events.
