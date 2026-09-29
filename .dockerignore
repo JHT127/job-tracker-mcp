@@ -1,0 +1,9 @@
+node_modules
+.git
+.github
+coverage
+dist
+job-tracker-dashboard/job-tracker-dashboard/node_modules
+job-tracker-dashboard/job-tracker-dashboard/dist
+npm-debug.log*
+.DS_Store
