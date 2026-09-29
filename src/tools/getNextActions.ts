@@ -1,41 +1,8 @@
 import { McpServer } from "@modelcontextprotocol/server";
 
+import { getApplicationService } from "../core/runtime.js";
 import { getNextActionsInputSchema } from "../schemas/getNextActions.js";
-import { loadApplications } from "../lib/applications.js";
-import type { ApplicationData } from "../schemas/applicationData.js";
-
-export function buildNextActions(applications: ApplicationData[]) {
-  const today = new Date("2026-07-31T00:00:00.000Z");
-
-  return applications
-    .map((application) => {
-      const appliedDate = new Date(`${application.date_applied}T00:00:00.000Z`);
-      const daysSinceApplied = Math.floor(
-        (today.getTime() - appliedDate.getTime()) / 86_400_000,
-      );
-      const isStale = daysSinceApplied >= 14;
-      const recentlyUpdated = daysSinceApplied <= 3;
-
-      if (isStale) {
-        return {
-          action: `Follow up with ${application.company}`,
-          application_id: application.id,
-          reason: `stale application: ${daysSinceApplied} days without an update.`,
-        };
-      }
-
-      if (recentlyUpdated) {
-        return {
-          action: `Prepare for ${application.company}`,
-          application_id: application.id,
-          reason: `recently updated to ${application.status}.`,
-        };
-      }
-
-      return null;
-    })
-    .filter((action): action is NonNullable<typeof action> => action !== null);
-}
+export { buildNextActions } from "../core/nextActions.js";
 
 export function registerGetNextActionsTool(server: McpServer) {
   server.registerTool(
@@ -48,15 +15,9 @@ export function registerGetNextActionsTool(server: McpServer) {
     },
     async (input) => {
       try {
-        let applications = await loadApplications();
-
-        if (input.status) {
-          applications = applications.filter(
-            (app) => app.status === input.status,
-          );
-        }
-
-        const allActions = buildNextActions(applications);
+        const allActions = await getApplicationService().getNextActions({
+          status: input.status,
+        });
 
         // Defense in depth: clamp even if schema-level cap is bypassed/changed.
         const requestedLimit = input.limit ?? 10;
@@ -81,7 +42,7 @@ export function registerGetNextActionsTool(server: McpServer) {
           statusFilter: input.status ?? null,
           total,
           truncated,
-          limit,
+          limit: effectiveLimit,
           actions,
         };
 
@@ -96,12 +57,12 @@ export function registerGetNextActionsTool(server: McpServer) {
           content: [
             {
               type: "text",
-              text: JSON.stringify({ actions, total, truncated }, null, 2),
+              text,
             },
           ],
         };
-      } catch (err: any) {
-        console.error("[get_next_actions] error", err);
+      } catch (error: unknown) {
+        console.error("[get_next_actions] error", error);
 
         return {
           content: [

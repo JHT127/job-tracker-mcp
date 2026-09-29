@@ -3,6 +3,13 @@ node_modules/
 
 # Build output
 dist/
+coverage/
+
+# User-specific application records
+data/applications.json
+data/applications.sqlite
+data/applications.sqlite-shm
+data/applications.sqlite-wal
 
 # Environment variables
 .env*
@@ -11,6 +18,9 @@ dist/
 # Logs
 npm-debug.log*
 *.log
+server.err
+server.out
+*.tgz
 
 # Editor/OS files
 .vscode/

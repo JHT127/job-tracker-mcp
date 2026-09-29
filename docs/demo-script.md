@@ -1,5 +1,7 @@
 # Demo Script — Job Application Tracker MCP
 
+> This script reflects the current SQLite-by-default server, REST API, dashboard, and expanded MCP toolset. Use fictional data for public demos.
+
 ## Demo Overview
 
 **Total time:** 3–5 minutes
@@ -18,10 +20,10 @@ The demo shows how a user can interact with the Job Application Tracker MCP serv
 
 ### Key points
 
-* Job applications can be difficult to track manually.
-* Important information can become scattered.
-* Users need to know which applications need follow-up.
-* The MCP server provides tools to manage this information.
+- Job applications can be difficult to track manually.
+- Important information can become scattered.
+- Users need to know which applications need follow-up.
+- The MCP server provides tools to manage this information.
 
 ---
 
@@ -45,7 +47,7 @@ MCP Server
 │  get_next_actions            │
 └──────────────────────────────┘
   ↓
-data/applications.json
+SQLite repository (JSON is an optional fallback)
 ```
 
 ### What to say
@@ -175,21 +177,20 @@ update_status
 
 ---
 
-# 3:30–4:30 — What I Would Build Next
+# 3:30–4:30 — Dashboard and API
 
 ### What to say
 
-> The current version focuses on the core job application tracking workflow. If I continued developing it, I would improve search and filtering, add more useful application insights, expand automated testing, and consider future integrations.
+> The dashboard consumes the REST API and can also run as a hosted demo with in-memory sample data. The same core services power MCP, REST, and dashboard workflows.
 >
 > Any future integrations would still need to follow the same security and validation principles used in the current project.
 
 ### Future improvements
 
-* Improve search and filtering.
-* Add application statistics and insights.
-* Expand automated testing.
-* Improve the user experience.
-* Consider future integrations.
+- Show the board and timeline views.
+- Switch dark mode and Arabic RTL mode.
+- Open the Connect Claude panel.
+- Show the generated tool reference at `docs/tool-reference.md`.
 
 ---
 
@@ -223,4 +224,3 @@ If Wi-Fi is unavailable:
 The backup demonstrates the same core workflow without depending on an external API.
 
 ---
-

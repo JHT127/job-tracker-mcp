@@ -1,15 +1,18 @@
 # Week 3 Data Plan — Job Application Tracker
 
 Written before any handler is wired to real data, per the Week 3 task rule:
-*"Do not implement all handlers until this file exists."*
+_"Do not implement all handlers until this file exists."_
 
 ## Why this looks different from the starter mapping
 
 The Week 3 brief's starter mapping (Notes → markdown, Weather → Open-Meteo,
 Quotes → Quotable, etc.) assumes each tool talks to a different kind of
 source. Our P0 tools don't — `docs/design.md` already commits us to **"No
-paid APIs or external services of any kind — all data lives in a local JSON
-file."** So all four P0 tools share one fixture: `./data/applications.json`.
+paid APIs or external services of any kind — all data lives locally."** The
+tools share one `ApplicationRepository`: SQLite at `./data/applications.sqlite`
+by default, or the atomic JSON store at `./data/applications.json` when
+`STORAGE=json` is set. An empty SQLite database imports an existing JSON file
+once, or uses the committed `./data/sample-data.json` if no JSON exists.
 There's no network call to lose on Demo Day, which trivially satisfies the
 "must work if Wi-Fi dies" rule — but we still document failure modes below,
 since a local file can still be missing, empty, or malformed.
@@ -20,12 +23,12 @@ in `docs/design.md`.
 
 ## Data Plan Table
 
-| tool | source | fixture path | auth | failure modes |
-|---|---|---|---|---|
-| `add_application` | Local file (JSON) | `./data/applications.json` | none | file missing/unreadable; file contains invalid JSON; duplicate `id` generated; `date_applied` not a valid ISO date; write succeeds but re-read shows stale data (race) |
-| `update_status` | Local file (JSON) | `./data/applications.json` | none | `id` not found in file; `new_status` not one of the allowed enum values; file empty (nothing to update); file locked/being written by a concurrent call; JSON parse error on read-before-write |
-| `list_applications` | Local file (JSON) | `./data/applications.json` | none | file missing → should return `[]`, not crash; empty file; malformed JSON (trailing comma, bad row); `status` filter value not in enum; one bad record in an otherwise-valid array shouldn't break the whole list |
-| `get_next_actions` | Local file (JSON) | `./data/applications.json` | none | file missing/empty → return `[]`, not an error; malformed `date_applied` breaks the days-since-applied calc; timezone/date-parsing edge case at midnight; every application already actioned (empty output is a valid, not a failure, state); large file (100+ rows) should degrade gracefully, not time out |
+| tool                | source                  | fixture path              | auth | failure modes                                                                                                                                                       |
+| ------------------- | ----------------------- | ------------------------- | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `add_application`   | `ApplicationRepository` | SQLite or JSON repository | none | sample missing/unreadable; malformed legacy JSON; duplicate company/role warning; invalid `date_applied`; concurrent updates                                        |
+| `update_status`     | `ApplicationRepository` | SQLite or JSON repository | none | `id` not found; invalid `new_status`; database/file unavailable; invalid stored record                                                                              |
+| `list_applications` | `ApplicationRepository` | SQLite or JSON repository | none | sample missing on first use; empty store; malformed JSON or database record; invalid `status` filter                                                                |
+| `get_next_actions`  | `ApplicationRepository` | SQLite or JSON repository | none | sample missing on first use; malformed date in stored record; timezone/date boundary; no matching action (valid empty state); large store should degrade gracefully |
 
 ## Example Responses (happy path)
 
@@ -95,28 +98,17 @@ in `docs/design.md`.
 
 ## Fixture Plan
 
-- `./data/applications.json` will be committed to the repo and seeded with
-  the same sample records already used in `getNextActions.test.ts` (Orion
-  VLSI Technologies, Exalt Technologies), so tests, the fixture, and the
-  demo story in `docs/design.md` all stay consistent.
-- Every P0 handler reads from (and `add_application` / `update_status`
-  write to) this one file — no per-tool fixture needed, since there's a
-  single data source for the whole server.
+- `./data/sample-data.json` is the committed, anonymized sample dataset.
+- SQLite (`./data/applications.sqlite`) is the default, ignored runtime store.
+- Set `STORAGE=json` to use ignored per-user `./data/applications.json`; its
+  missing-file path initializes from the sample.
+- All handlers use the same repository contract, so storage choice does not
+  change tool behavior or create per-tool fixtures.
 
-## Fallback Plan (not yet implemented)
+## Missing-File Behavior
 
-Since there's no external API in P0, there's no "cache the last good API
-response" fallback to build. The equivalent risk for us is a corrupted or
-missing `applications.json` on Demo Day. Planned fallback, to be built
-**after** this plan is approved:
-
-- On startup, if `./data/applications.json` is missing or fails to parse,
-  fall back to an in-memory copy of the same seed data (the array already
-  hardcoded in `getNextActions.ts`) instead of crashing the server.
-- Handlers catch JSON parse errors and return a clear tool error message
-  ("could not read applications data") rather than failing silently, per
-  the MCP README note already captured in `docs/design.md`.
-- This fallback is **not implemented yet** — intentionally, per the Week 3
-  rule not to build handlers before this plan is committed. Tracked as a
-  follow-up in the Week 3 GitHub Issue.
-
+When the JSON runtime file is absent, the repository reads the sample and
+creates the runtime file with exclusive-create semantics. A new empty SQLite
+database imports an existing JSON runtime file when available, otherwise it
+loads the sample once. A missing/unreadable sample or malformed runtime data
+remains an error and is returned through the existing generic tool handling.

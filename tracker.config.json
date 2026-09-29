@@ -1,0 +1,55 @@
+{
+  "defaultTracker": "jobs",
+  "trackers": {
+    "jobs": {
+      "statuses": ["applied", "interview", "offer", "rejected", "no_response"],
+      "fields": [
+        "company",
+        "role",
+        "date_applied",
+        "status",
+        "source",
+        "notes",
+        "salary",
+        "location",
+        "work_mode",
+        "job_url",
+        "priority",
+        "tags",
+        "deadline",
+        "resume_version"
+      ],
+      "defaults": {
+        "status": "applied",
+        "source": "linkedin"
+      }
+    },
+    "scholarships": {
+      "statuses": ["applied", "reviewing", "awarded", "rejected"],
+      "fields": ["program", "deadline", "amount", "status"],
+      "defaults": {
+        "status": "applied"
+      }
+    },
+    "university": {
+      "statuses": [
+        "applied",
+        "under_review",
+        "accepted",
+        "waitlisted",
+        "rejected"
+      ],
+      "fields": ["school", "program", "deadline", "status"],
+      "defaults": {
+        "status": "applied"
+      }
+    },
+    "visas": {
+      "statuses": ["draft", "submitted", "waiting", "approved", "rejected"],
+      "fields": ["country", "visa_type", "deadline", "status"],
+      "defaults": {
+        "status": "draft"
+      }
+    }
+  }
+}

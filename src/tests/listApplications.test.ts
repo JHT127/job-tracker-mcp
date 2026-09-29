@@ -1,5 +1,4 @@
-import { test } from "node:test";
-import assert from "node:assert/strict";
+import { describe, expect, it } from "vitest";
 
 const MAX_APPLICATIONS = 50;
 
@@ -24,44 +23,46 @@ function applyOutputCap(applications: Application[]) {
   };
 }
 
-test("returns all applications when there are 50 or fewer", () => {
-  const applications: Application[] = Array.from(
-    { length: 50 },
-    (_, index) => ({
-      id: `app-${String(index + 1).padStart(3, "0")}`,
-      company: `Company ${index + 1}`,
-      role: "Software Engineer Intern",
-      date_applied: "2026-07-01",
-      status: "applied",
-      source: "cold_apply",
-      notes: "Test application",
-    })
-  );
+describe("application output cap", () => {
+  it("returns all applications when there are 50 or fewer", () => {
+    const applications: Application[] = Array.from(
+      { length: 50 },
+      (_, index) => ({
+        id: `app-${String(index + 1).padStart(3, "0")}`,
+        company: `Company ${index + 1}`,
+        role: "Software Engineer Intern",
+        date_applied: "2026-07-01",
+        status: "applied",
+        source: "cold_apply",
+        notes: "Test application",
+      }),
+    );
 
-  const result = applyOutputCap(applications);
+    const result = applyOutputCap(applications);
 
-  assert.equal(result.applications.length, 50);
-  assert.equal(result.total, 50);
-  assert.equal(result.truncated, false);
-});
+    expect(result.applications).toHaveLength(50);
+    expect(result.total).toBe(50);
+    expect(result.truncated).toBe(false);
+  });
 
-test("returns only 50 applications when there are more than 50", () => {
-  const applications: Application[] = Array.from(
-    { length: 51 },
-    (_, index) => ({
-      id: `app-${String(index + 1).padStart(3, "0")}`,
-      company: `Company ${index + 1}`,
-      role: "Software Engineer Intern",
-      date_applied: "2026-07-01",
-      status: "applied",
-      source: "cold_apply",
-      notes: "Test application",
-    })
-  );
+  it("returns only 50 applications when there are more than 50", () => {
+    const applications: Application[] = Array.from(
+      { length: 51 },
+      (_, index) => ({
+        id: `app-${String(index + 1).padStart(3, "0")}`,
+        company: `Company ${index + 1}`,
+        role: "Software Engineer Intern",
+        date_applied: "2026-07-01",
+        status: "applied",
+        source: "cold_apply",
+        notes: "Test application",
+      }),
+    );
 
-  const result = applyOutputCap(applications);
+    const result = applyOutputCap(applications);
 
-  assert.equal(result.applications.length, 50);
-  assert.equal(result.total, 51);
-  assert.equal(result.truncated, true);
+    expect(result.applications).toHaveLength(50);
+    expect(result.total).toBe(51);
+    expect(result.truncated).toBe(true);
+  });
 });

@@ -1,24 +1,83 @@
 {
-  "name": "my-first-mcp",
+  "name": "job-tracker-mcp",
   "version": "1.0.0",
   "type": "module",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "tsx src/index.ts",
-    "inspect": "npx @modelcontextprotocol/inspector npx tsx src/index.ts"
+  "description": "Job tracking MCP server with REST API, dashboard, and package-ready CLI",
+  "main": "./dist/index.js",
+  "bin": {
+    "job-tracker-mcp": "./dist/index.js"
   },
-  "keywords": [],
-  "author": "",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "SECURITY.md",
+    "tracker.config.json"
+  ],
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JHT127/my-first-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/JHT127/my-first-mcp/issues"
+  },
+  "homepage": "https://github.com/JHT127/my-first-mcp#readme",
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --max-warnings=0",
+    "format": "prettier --write .",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "generate:tools": "tsx scripts/generate-tool-reference.ts",
+    "check:tools": "tsx scripts/generate-tool-reference.ts --check",
+    "dev:api": "REST_API_MODE=true tsx src/index.ts",
+    "inspect": "npx @modelcontextprotocol/inspector npx tsx src/index.ts",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "src/**/*.ts": [
+      "eslint --fix",
+      "prettier --write"
+    ]
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "job-tracker",
+    "career",
+    "sqlite"
+  ],
+  "author": "Joud Thaher",
   "license": "ISC",
   "dependencies": {
     "@modelcontextprotocol/server": "^2.0.0-beta.5",
+    "better-sqlite3": "11.10.0",
+    "csv-parse": "^7.0.3",
+    "csv-stringify": "^6.9.0",
+    "pino": "^10.3.1",
+    "supertest": "^7.3.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@modelcontextprotocol/client": "^2.2.0",
+    "@types/better-sqlite3": "^9.6.0",
     "@types/node": "^26.1.2",
+    "@types/supertest": "^7.2.1",
+    "@vitest/coverage-v8": "^5.0.2",
+    "eslint": "^10.11.0",
+    "globals": "^17.12.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.6.0",
+    "prettier": "^3.9.9",
     "tsx": "^4.23.1",
-    "typescript": "^7.0.2"
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.71.0",
+    "vitest": "^5.0.2"
   }
 }

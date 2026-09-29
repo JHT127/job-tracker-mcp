@@ -1,10 +1,10 @@
-import assert from "node:assert/strict";
-import test from "node:test";
+import { expect, test } from "vitest";
 
+import { applicationsDataSchema } from "../schemas/applicationData.js";
 import { buildNextActions } from "./getNextActions.js";
 
 test("buildNextActions flags stale applications and recent status changes", () => {
-  const applications = [
+  const applications = applicationsDataSchema.parse([
     {
       id: "app-1",
       company: "Orion VLSI Technologies",
@@ -23,16 +23,20 @@ test("buildNextActions flags stale applications and recent status changes", () =
       source: "referral" as const,
       notes: "Interview scheduled",
     },
-  ];
+  ]);
 
-  const actions = buildNextActions(applications);
+  const actions = buildNextActions(applications, {
+    now: new Date("2026-07-31T00:00:00.000Z"),
+  });
 
-  assert.ok(
+  expect(
     actions.some(
       (action) =>
-        action.reason.includes("stale") ||
-        action.reason.includes("days without"),
+        action.reason.includes("No status update") ||
+        action.reason.includes("days"),
     ),
-  );
-  assert.ok(actions.some((action) => action.reason.includes("recently")));
+  ).toBe(true);
+  expect(
+    actions.some((action) => action.reason.includes("Recently updated")),
+  ).toBe(true);
 });

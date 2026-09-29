@@ -1,541 +1,176 @@
-# Job Application Tracker MCP
+# Job Tracker MCP
 
-A Model Context Protocol (MCP) server for managing job application records.
+[![CI](https://github.com/JHT127/my-first-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/JHT127/my-first-mcp/actions/workflows/ci.yml) [![License: ISC](https://img.shields.io/badge/license-ISC-blue.svg)](LICENSE) [![npm](https://img.shields.io/npm/v/job-tracker-mcp.svg)](https://www.npmjs.com/package/job-tracker-mcp)
 
-The server allows an MCP client such as MCP Inspector to:
+A local-first MCP server for tracking applications, contacts, interviews, follow-ups, and career workflows from Claude or any compatible MCP client.
 
-* Add job applications.
-* List stored applications.
-* Search applications by company or role.
-* Update application statuses.
-* Delete applications.
-* Get suggested next actions.
+## Why it exists
 
-Application data is stored locally in:
+Job searches create many small, high-context tasks: remembering status changes, following up at the right time, preparing for interviews, and keeping contact history connected to applications. Job Tracker MCP turns those tasks into validated tools backed by local SQLite storage, with a REST API and dashboard when a visual workflow is useful.
 
-```text
-./data/applications.json
-```
+## Features
 
-The project does not require external APIs, databases, API keys, or network services.
+| Area         | Included                                                                                                       |
+| ------------ | -------------------------------------------------------------------------------------------------------------- |
+| MCP          | 25 tools, resources, prompts, stdio, and Streamable HTTP                                                       |
+| Storage      | SQLite by default, JSON fallback, migration, history, undo, duplicate warnings                                 |
+| Workflow     | Applications, contacts, interviews, next actions, stale/conversion/health insights, reports, CSV import/export |
+| API          | REST routes, API-key auth, rate limiting, OpenAPI, webhooks, structured errors                                 |
+| Integrations | Calendar, Notion, Gmail, Telegram, and generic webhook adapters                                                |
+| Dashboard    | Board, timeline, contacts, search, filters, demo mode, dark mode, English/Arabic RTL                           |
+| Operations   | Configurable tracker types, redacted logging, Docker image, npm package, generated tool reference              |
 
-Built as part of [NextFlows Academy](https://nextflows.ai/academy/portal/dashboard?cohort=ac421725-af45-4094-a108-f8485d13fe67) — Building MCP AI Engines program.
-## Requirements
-
-Before installing the project, make sure you have:
-
-* Node.js
-* npm
-
-Check your installed versions:
+## Quick start
 
 ```bash
-node --version
-npm --version
-```
-
-## Installation
-
-Clone the repository:
-
-```bash
-git clone <repository-url>
-cd my-first-mcp
-```
-
-Install the project dependencies:
-
-```bash
-npm install
-```
-
-## Run the Server
-
-Start the MCP server with:
-
-```bash
+npm ci
+npm run build
 npm run dev
 ```
 
-The server communicates over stdio, so it may continue running without displaying normal terminal output.
+The last command starts the stdio MCP server. To run the REST API instead:
 
-To stop the server:
-
-```text
-Ctrl+C
+```bash
+npm run dev:api
 ```
 
-## Run MCP Inspector
-
-MCP Inspector can be used to connect to the server and test its tools.
-
-Run:
+To inspect the MCP server interactively:
 
 ```bash
 npm run inspect
 ```
 
-The direct Inspector command is:
+Node.js 22 or newer is recommended. Runtime data is created under `data/` and is ignored by Git.
 
-```bash
-npm run inspect
-```
+## Use with MCP clients
 
-In MCP Inspector:
+Build first so the client runs the compiled package. Replace `/absolute/path/to/repo` with the clone location.
 
-1. Open the Tools section.
-2. Confirm the tools are listed:
+### Claude Desktop, macOS and Linux
 
-   * `add_application`
-   * `list_applications`
-   * `search_applications`
-   * `update_status`
-   * `delete_application`
-   * `get_next_actions`
-3. Test each tool with valid input.
-4. Test invalid input and confirm that validation rejects it.
-
-### Example validation test
-
-For `add_application`, an empty role should be rejected:
-
-```json
-{
-  "company": "Google",
-  "role": "",
-  "date_applied": "2026-08-12",
-  "status": "applied",
-  "source": "linkedin"
-}
-```
-
-After Inspector starts:
-
-1. Open the Tools section.
-2. Confirm that the MCP tools are available.
-3. Call the tools with valid inputs.
-4. Test invalid inputs and confirm that validation errors are returned.
-
-## Connect to Claude Desktop
-
-Claude Desktop can run this local MCP server over stdio.
-
-### Windows
-
-1. Install and update Claude Desktop.
-2. Make sure Node.js and npm are available.
-3. Open Claude Desktop and go to **Settings → Developer → Edit Config**.
-4. Add the following MCP server configuration. Replace `YOUR_WINDOWS_USERNAME` with your Windows username:
+Typical config file: `~/Library/Application Support/Claude/claude_desktop_config.json` on macOS, or `~/.config/Claude/claude_desktop_config.json` on Linux.
 
 ```json
 {
   "mcpServers": {
-    "my-first-mcp": {
-      "command": "C:/Program Files/nodejs/npx.cmd",
-      "args": [
-        "-y",
-        "tsx",
-        "C:/Users/YOUR_WINDOWS_USERNAME/Desktop/my-first-mcp/src/index.ts"
-      ],
-      "cwd": "C:/Users/YOUR_WINDOWS_USERNAME/Desktop/my-first-mcp"
+    "job-tracker": {
+      "command": "node",
+      "args": ["/absolute/path/to/repo/dist/index.js"],
+      "cwd": "/absolute/path/to/repo"
     }
   }
 }
 ```
 
-5. Save the configuration.
-6. Fully quit Claude Desktop and open it again.
-7. Open a new chat and confirm that `my-first-mcp` is running in the tools/connectors section.
-8. Approve tool calls when Claude asks for permission.
+### Claude Desktop, Windows
 
-### Verify the connection
-
-Try these example prompts:
-
-```text
-List all my job applications.
-```
-
-```text
-Add a job application for Google for the Software Engineer role.
-The application date is 2026-08-12, the status is applied, and the source is linkedin.
-```
-
-```text
-Search my applications for Google.
-```
-
-```text
-What are my next actions for my job applications?
-```
-
-On Windows, if Claude cannot find `npx`, use the full path to `npx.cmd`, for example:
-
-```text
-C:/Program Files/nodejs/npx.cmd
-```
-
-The `cwd` should point to the repository root, while the `src/index.ts` argument above uses an absolute path so Claude Desktop can start the server even when its own working directory is different.
-
-## Available Tools
-
-| Tool                    | Description                                                | Read-only |
-| ----------------------- | ------------------------------------------------------------ | :-------: |
-| `add_application`       | Adds a new job application to the tracker.                   |           |
-| `list_applications`     | Lists stored job applications.                                | ✅        |
-| `search_applications`   | Searches applications by company or role keyword.             | ✅        |
-| `update_status`         | Updates the status of an existing application.                |           |
-| `delete_application`    | Deletes an existing application by its ID.                    |           |
-| `get_next_actions`      | Returns suggested next actions based on application data.     | ✅        |
-
-### `add_application`
-
-Adds a new job application.
-
-The input is validated using Zod before the application is stored.
-
-Validation includes:
-
-* Company name is required.
-* Role is required.
-* Company and role are limited to 100 characters.
-* Company and role must contain letters.
-* `date_applied` must use `YYYY-MM-DD`.
-* `status` must be one of the supported values.
-* `source` must be one of the supported values.
-* `notes` is optional and limited to 500 characters.
-
-Example input:
+Use forward slashes in JSON paths:
 
 ```json
 {
-  "company": "Google",
-  "role": "Software Engineer",
-  "date_applied": "2026-08-12",
-  "status": "applied",
-  "source": "linkedin",
-  "notes": "Applied through the company job portal."
+  "mcpServers": {
+    "job-tracker": {
+      "command": "C:/Program Files/nodejs/node.exe",
+      "args": ["C:/Users/YOUR_USERNAME/path/to/repo/dist/index.js"],
+      "cwd": "C:/Users/YOUR_USERNAME/path/to/repo"
+    }
+  }
 }
 ```
 
-### `list_applications`
+### Cursor or VS Code
 
-Returns stored job applications from:
+Register the same command in the client's MCP settings. The command is `node`, the argument is the absolute path to `dist/index.js`, and the working directory is the repository root. Restart the client after changing its configuration.
 
-```text
-./data/applications.json
-```
+## Configuration
 
-The tool validates application data before returning it and limits the amount of output returned.
+`tracker.config.json` defines the default `jobs` tracker and alternate `scholarships`, `university`, and `visas` workflows. Set `TRACKER_CONFIG_PATH` to load another file and `TRACKER_TYPE` to select a tracker.
 
-### `search_applications`
+Important environment variables:
 
-Searches stored job applications by a keyword, matching against the `company` or `role` fields (case-insensitive, partial match). This tool is **read-only** and does not modify `./data/applications.json`.
+| Variable         | Purpose                                                 |
+| ---------------- | ------------------------------------------------------- |
+| `STORAGE`        | `sqlite` by default; set `json` for the JSON repository |
+| `REST_API_MODE`  | Start the REST API on port 3001                         |
+| `MCP_HTTP_MODE`  | Start the Streamable HTTP MCP server on port 3000       |
+| `API_KEY`        | Require an `X-API-Key` header for REST requests         |
+| `LOG_LEVEL`      | Set Pino log verbosity                                  |
+| `API_RATE_LIMIT` | Requests allowed per rate-limit window                  |
+| `VITE_API_URL`   | Dashboard API base URL                                  |
+| `VITE_DEMO=true` | Run the dashboard without a backend                     |
 
-**Input:**
-
-| Field   | Type   | Required | Notes              |
-| ------- | ------ | :------: | ------------------- |
-| `query` | string |    Yes   | 1–100 characters.   |
-
-**Behavior:**
-
-1. Validates `query` against the schema.
-2. Reads all applications from `./data/applications.json`.
-3. Filters records where `company` or `role` contains `query` (case-insensitive).
-4. Returns matching records as JSON, or a plain message if none match.
-
-Example input:
-
-```json
-{ "query": "google" }
-```
-
-Example output:
-
-```json
-[
-  {
-    "id": "app-002",
-    "company": "Google",
-    "role": "Backend Developer",
-    "date_applied": "2026-08-19",
-    "status": "applied",
-    "source": "linkedin",
-    "notes": ""
-  }
-]
-```
-
-If no applications match, the tool returns:
-
-```text
-No matching applications found.
-```
-
-### `update_status`
-
-Updates the status of an existing application.
-
-Supported statuses are:
-
-```text
-applied
-interview
-offer
-rejected
-no_response
-```
-
-If the application ID does not exist, the tool returns a clear error.
-
-### `delete_application`
-
-Deletes an existing application record by its ID. Use this to remove a record added by mistake or a duplicate entry.
-
-**Input:**
-
-| Field | Type   | Required | Notes                              |
-| ----- | ------ | :------: | ----------------------------------- |
-| `id`  | string |    Yes   | The unique ID of the application. |
-
-If the application ID does not exist, the tool returns a clear error instead of modifying the file.
-
-Example input:
-
-```json
-{ "id": "app-004" }
-```
-
-### `get_next_actions`
-
-Provides suggested next actions based on the stored job application data.
-
-## Example Prompts
-
-The following prompts can be used when testing the server through an MCP client:
-
-```text
-Add a job application for Google for the Software Engineer role.
-The application date is 2026-08-12, the status is applied, and the source is linkedin.
-```
-
-```text
-List all my job applications.
-```
-
-```text
-Search my applications for companies with "tech" in the name.
-```
-
-```text
-Update application app-001 to interview status.
-```
-
-```text
-Delete application app-004.
-```
-
-```text
-What are my next actions for my job applications?
-```
-
-## Troubleshooting
-
-### 1. `npm` or `node` is not recognized
-
-**Cause:** Node.js or npm is not installed or is not available in the system PATH.
-
-**Solution:** Install Node.js, restart the terminal, and verify:
+## Dashboard
 
 ```bash
-node --version
-npm --version
-```
-
-### 2. `Cannot find module` or missing dependency errors
-
-**Cause:** Project dependencies have not been installed.
-
-**Solution:** From the project directory, run:
-
-```bash
-npm install
-```
-
-Then start the server again:
-
-```bash
+cd job-tracker-dashboard/job-tracker-dashboard
+npm ci
 npm run dev
 ```
 
-### 3. MCP tool input validation error
+For a production build, run `npm run build`. The dashboard uses the API first and falls back to demo data when `VITE_DEMO=true` or the API is unavailable.
 
-**Cause:** The supplied tool input does not match the required schema. For example, a required field such as `role` may be empty or a status/source value may not be supported.
+## Documentation
 
-**Solution:** Check the tool requirements and provide valid values.
+- [Architecture](docs/architecture.md)
+- [REST API](docs/api.md)
+- [Generated MCP tool reference](docs/tool-reference.md)
+- [Demo script and screenshot instructions](docs/demo-script.md)
+- [Threat model](docs/threat-model.md)
+- [Security policy](SECURITY.md)
+- [Contributing](CONTRIBUTING.md)
+- [Roadmap](ROADMAP.md)
+- [Changelog](CHANGELOG.md)
 
-For example, this invalid input:
+## Tool reference maintenance
 
-```json
-{
-  "company": "Google",
-  "role": "",
-  "date_applied": "2026-08-12",
-  "status": "applied",
-  "source": "linkedin"
-}
+The tool reference is generated from the live built MCP server and its actual schemas:
+
+```bash
+npm run build
+npm run generate:tools
+npm run check:tools
 ```
 
-should be rejected because the role is empty.
+CI fails when `docs/tool-reference.md` is stale.
 
-## Application Statuses
+## Architecture
 
-The supported application statuses are:
-
-```text
-applied
-interview
-offer
-rejected
-no_response
+```mermaid
+flowchart LR
+  Client[MCP client] --> Transport[stdio or Streamable HTTP]
+  Browser[Dashboard] --> REST[REST API]
+  Transport --> Tools[MCP tools]
+  Tools --> Core[Shared core services]
+  REST --> Core
+  Core --> Storage[(SQLite or JSON)]
+  Core --> Integrations[Optional integrations]
 ```
 
-## Application Sources
+## Screenshots
 
-The supported application sources are:
+Screenshots are intentionally placeholders until a real local run is captured. Follow [docs/demo-script.md](docs/demo-script.md), capture the dashboard at 1440x900 and 390x844, and save reviewed images under `docs/screenshots/` with descriptive names.
 
-```text
-cold_apply
-linkedin
-referral
-company_website
-career_fair
+Recommended captures: overview board, timeline, contacts, dark mode, Arabic RTL, and the Connect Claude panel.
+
+## Development
+
+```bash
+npm ci
+npm run typecheck
+npm run lint
+npm test
+npm run build
 ```
 
-## Data Storage
+For package and container checks:
 
-Application data is stored in a local JSON file:
-
-```text
-./data/applications.json
+```bash
+npm pack
+docker build -t job-tracker-mcp:local .
 ```
 
-Example application:
-
-```json
-{
-  "id": "app-001",
-  "company": "Example Company",
-  "role": "Software Engineer",
-  "date_applied": "2026-08-12",
-  "status": "applied",
-  "source": "linkedin",
-  "notes": ""
-}
-```
-
-The project does not use an external database or API.
-
-## Security
-
-Security hardening was performed during Week 4.
-
-The project includes:
-
-* Zod input validation.
-* Length limits on user-provided fields.
-* Allowlisted status and source values.
-* Restricted local file access.
-* Output limits for tools that return multiple records.
-* Short error messages without raw stack traces.
-* `.env` and `.env.local` excluded through `.gitignore`.
-* No external APIs or API keys are required.
-
-Additional security details are available in:
-
-```text
-docs/threat-model.md
-SECURITY.md
-```
-
-## Project Documentation
-
-Additional documentation is available in the `docs` directory:
-
-* `project-choice.md` — Project selection and scope.
-* `design.md` — Tool and server design.
-* `data-plan.md` — Data storage and data handling plan.
-* `threat-model.md` — Security threats and mitigations.
-* `review-checklist.md` — Peer review results and action items.
-
-Example conversations showing the server in use with a model are in [`examples/conversations.md`](./examples/conversations.md).
-
-## Project Structure
-
-```text
-my-first-mcp/
-├── data/
-│   └── applications.json
-│
-├── docs/
-│   ├── data-plan.md
-│   ├── design.md
-│   ├── project-choice.md
-│   ├── review-checklist.md
-│   ├── test-plan.md
-│   └── threat-model.md
-│
-├── examples/
-│   ├── add_application.json
-│   ├── get_next_actions.json
-│   ├── list_applications.json
-│   ├── search_applications.json
-│   └── update_status.json
-│
-├── src/
-│   ├── lib/
-│   │   └── applications.ts
-│   │
-│   ├── schemas/
-│   │   ├── addApplication.ts
-│   │   ├── applicationData.ts
-│   │   ├── getNextActions.ts
-│   │   ├── listApplications.ts
-│   │   ├── searchApplications.ts
-│   │   └── updateStatus.ts
-│   │
-│   ├── tests/
-│   │   └── listApplications.test.ts
-│   │
-│   ├── tools/
-│   │   ├── addApplication.ts
-│   │   ├── deleteApplication.ts
-│   │   ├── getNextActions.ts
-│   │   ├── getNextActions.test.ts
-│   │   ├── listApplications.ts
-│   │   ├── searchApplications.ts
-│   │   ├── updateStatus.ts
-│   │   └── ...
-│   │
-│   └── index.ts
-│
-├── .env.example
-├── .gitignore
-├── package.json
-├── package-lock.json
-├── README.md
-├── SECURITY.md
-└── tsconfig.json
-```
-
-## Team
-
-* Taima Nazzal
-* Shahd Shwekeyeh
-* Joud Thaher
-* Razan Froukh
+The project uses Conventional Commits. See [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request.
 
 ## License
 
-This project is licensed under the ISC License.
+ISC. See [LICENSE](LICENSE).

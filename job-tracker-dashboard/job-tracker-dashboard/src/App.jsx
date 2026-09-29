@@ -1,11 +1,11 @@
-import { useState, useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 
 const STATUS_META = {
-  applied:     { label: "Applied",     color: "var(--blue-stamp)",  rot: -6 },
-  interview:   { label: "Interview",   color: "var(--amber-stamp)", rot: 4  },
-  offer:       { label: "Offer",       color: "var(--green-stamp)", rot: -3 },
-  rejected:    { label: "Rejected",    color: "var(--red-stamp)",   rot: 7  },
-  no_response: { label: "No Response", color: "var(--ink-soft)",    rot: -5 },
+  applied: { label: "Applied", color: "#3B5C7E" },
+  interview: { label: "Interview", color: "#B8823A" },
+  offer: { label: "Offer", color: "#4F7A5C" },
+  rejected: { label: "Rejected", color: "#A63D3D" },
+  no_response: { label: "No Response", color: "#5B6B7A" },
 };
 
 const SOURCE_LABEL = {
@@ -16,686 +16,812 @@ const SOURCE_LABEL = {
   career_fair: "Career Fair",
 };
 
-const TEAM = ["Razan Froukh", "Shahd Shwekeyeh", "Taima Nazal", "Joud Thaher"];
-const REPO_URL = "https://github.com/JHT127/my-first-mcp";
-const REPO_LABEL = "JHT127/my-first-mcp";
-const REPO_DESC = "A Model Context Protocol (MCP) server for tracking job applications — built with TypeScript, Zod, and the MCP SDK.";
-
-const SEED = [
-  { id: "app-001", company: "Exalt Technologies", role: "Software Engineer Intern", date_applied: "2026-07-01", status: "interview", source: "cold_apply", notes: "Waiting for response" },
-  { id: "app-002", company: "Orion VLSI Technologies", role: "Verification Engineer Intern", date_applied: "2026-06-20", status: "interview", source: "linkedin", notes: "Interview scheduled" },
-  { id: "app-003", company: "Google", role: "Frontend Developer", date_applied: "2026-08-18", status: "applied", source: "linkedin", notes: "" },
-  { id: "app-004", company: "Google", role: "Backend Developer", date_applied: "2026-08-19", status: "applied", source: "linkedin", notes: "" },
+const DEMO_APPS = [
+  {
+    id: "app-001",
+    company: "Exalt Technologies",
+    role: "Software Engineer Intern",
+    date_applied: "2026-07-01",
+    status: "interview",
+    source: "cold_apply",
+    notes: "Waiting for response",
+    updated_at: "2026-08-01T00:00:00.000Z",
+    history: [
+      { status: "applied", timestamp: "2026-07-01T00:00:00.000Z" },
+      { status: "interview", timestamp: "2026-08-01T00:00:00.000Z" },
+    ],
+  },
+  {
+    id: "app-002",
+    company: "Orion VLSI",
+    role: "Verification Engineer Intern",
+    date_applied: "2026-06-20",
+    status: "applied",
+    source: "linkedin",
+    notes: "Follow-up scheduled",
+    updated_at: "2026-08-14T00:00:00.000Z",
+    history: [{ status: "applied", timestamp: "2026-06-20T00:00:00.000Z" }],
+  },
+  {
+    id: "app-003",
+    company: "Google",
+    role: "Frontend Developer",
+    date_applied: "2026-08-18",
+    status: "offer",
+    source: "linkedin",
+    notes: "Offer received",
+    updated_at: "2026-08-19T00:00:00.000Z",
+    history: [
+      { status: "applied", timestamp: "2026-08-18T00:00:00.000Z" },
+      { status: "offer", timestamp: "2026-08-19T00:00:00.000Z" },
+    ],
+  },
 ];
 
-const STORE_KEY = "job-applications-en";
-const TODAY = new Date("2026-08-24");
+const DEMO_CONTACTS = [
+  {
+    id: "con-001",
+    person: "Maya Hassan",
+    company: "Exalt Technologies",
+    last_message_date: "2026-08-10",
+    notes: "Recruiter",
+  },
+  {
+    id: "con-002",
+    person: "Omar Nassar",
+    company: "Google",
+    last_message_date: "2026-06-30",
+    notes: "Hiring manager",
+  },
+];
 
-function daysSince(dateStr) {
-  const d = new Date(dateStr);
-  return Math.floor((TODAY - d) / (1000 * 60 * 60 * 24));
+const PREF_KEY = "job-tracker-dashboard-preferences";
+const defaultPreferences = { theme: "light", lang: "en" };
+
+function getSavedPreferences() {
+  try {
+    const value = localStorage.getItem(PREF_KEY);
+    return value
+      ? { ...defaultPreferences, ...JSON.parse(value) }
+      : defaultPreferences;
+  } catch {
+    return defaultPreferences;
+  }
 }
 
-function FolderCard({ app, onOpen }) {
-  const meta = STATUS_META[app.status] || STATUS_META.applied;
-  const stale = (app.status === "applied" || app.status === "interview") && daysSince(app.date_applied) > 14;
-  return (
-    <button className="folder-card" onClick={() => onOpen(app)}>
-      <div className="folder-tab">{app.id}</div>
-      <div className="folder-body">
-        <div className="folder-role">{app.role}</div>
-        <div className="folder-company">{app.company}</div>
-        <div className="folder-meta">
-          <span>{app.date_applied}</span>
-          <span className="dot">·</span>
-          <span>{SOURCE_LABEL[app.source] || app.source}</span>
-        </div>
-        {stale && <div className="stale-flag">Needs follow-up · {daysSince(app.date_applied)}d</div>}
-      </div>
-      <div className="stamp" style={{ "--stamp-color": meta.color, "--stamp-rot": `${meta.rot}deg` }}>
-        {meta.label}
-      </div>
-    </button>
+function readJsonResponse(response) {
+  if (!response.ok) {
+    throw new Error(`Request failed with ${response.status}`);
+  }
+  return response.json();
+}
+
+function formatDate(value) {
+  if (!value) return "—";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? value : date.toISOString().slice(0, 10);
+}
+
+function shouldFollowUp(application, now) {
+  const threshold = { applied: 14, interview: 7, no_response: 14 }[
+    application.status
+  ];
+  if (!threshold) return false;
+  const lastUpdated = new Date(
+    application.updated_at ?? application.date_applied,
   );
-}
-
-function Modal({ children, onClose }) {
-  return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal-sheet" onClick={(e) => e.stopPropagation()}>
-        {children}
-      </div>
-    </div>
+  const diffDays = Math.floor(
+    (now.getTime() - lastUpdated.getTime()) / 86_400_000,
   );
+  return diffDays >= threshold;
 }
 
-export default function JobTrackerDashboard() {
-  const [apps, setApps] = useState(null);
-  const [filter, setFilter] = useState("all");
-  const [selected, setSelected] = useState(null);
-  const [adding, setAdding] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [toast, setToast] = useState("");
+function App() {
+  const [preferences, setPreferences] = useState(() => getSavedPreferences());
+  const [apps, setApps] = useState([]);
+  const [contacts, setContacts] = useState([]);
+  const [selectedView, setSelectedView] = useState("board");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [demoMode, setDemoMode] = useState(
+    import.meta.env.VITE_DEMO === "true",
+  );
+
+  const now = new Date();
+  const strings = {
+    en: {
+      title: "Job Application Tracker",
+      board: "Board",
+      timeline: "Timeline",
+      contacts: "Contacts",
+      search: "Search by company or role",
+      overview: "Overview",
+      connectClaude: "Connect Claude",
+      repo: "Repository",
+      darkMode: "Dark mode",
+      language: "Language",
+      demoMode: "Demo mode",
+      loading: "Loading applications…",
+      noResults: "No applications match your filters.",
+      apis: "Connect to API",
+      summary: "Pipeline summary",
+      followUps: "Follow-up items",
+      interviews: "Upcoming interviews",
+    },
+    ar: {
+      title: "متتبع طلبات العمل",
+      board: "اللوحة",
+      timeline: "الجدول الزمني",
+      contacts: "جهات الاتصال",
+      search: "ابحث حسب الشركة أو الدور",
+      overview: "نظرة عامة",
+      connectClaude: "ربط كلود",
+      repo: "المستودع",
+      darkMode: "الوضع الداكن",
+      language: "اللغة",
+      demoMode: "وضع العرض",
+      loading: "جارٍ تحميل الطلبات…",
+      noResults: "لا توجد طلبات تطابق المرشحات.",
+      apis: "الاتصال بالواجهة",
+      summary: "ملخص الخط الأنبوبي",
+      followUps: "عناصر المتابعة",
+      interviews: "المقابلات القادمة",
+    },
+  };
+
+  const labels = strings[preferences.lang] ?? strings.en;
 
   useEffect(() => {
-    (async () => {
-      try {
-        const res = await window.storage.get(STORE_KEY);
-        setApps(res ? JSON.parse(res.value) : SEED);
-      } catch {
-        setApps(SEED);
+    localStorage.setItem(PREF_KEY, JSON.stringify(preferences));
+    document.documentElement.setAttribute("data-theme", preferences.theme);
+    document.documentElement.lang = preferences.lang;
+    document.documentElement.dir = preferences.lang === "ar" ? "rtl" : "ltr";
+  }, [preferences]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadDashboardData() {
+      setLoading(true);
+      setError("");
+
+      if (import.meta.env.VITE_DEMO === "true" || demoMode) {
+        setApps(DEMO_APPS);
+        setContacts(DEMO_CONTACTS);
+        setLoading(false);
+        return;
       }
-    })();
-  }, []);
 
-  const persist = async (next) => {
-    setApps(next);
-    try {
-      await window.storage.set(STORE_KEY, JSON.stringify(next));
-    } catch {
-      // local state still updated; storage write failed silently
+      const apiBase = import.meta.env.VITE_API_URL || "http://127.0.0.1:3001";
+      try {
+        const apiKey = import.meta.env.VITE_API_KEY;
+        const [appsResponse, contactsResponse] = await Promise.all([
+          fetch(`${apiBase}/applications`, {
+            headers: apiKey ? { "X-API-Key": apiKey } : undefined,
+          }),
+          fetch(`${apiBase}/contacts`, {
+            headers: apiKey ? { "X-API-Key": apiKey } : undefined,
+          }),
+        ]);
+
+        const nextApps = await readJsonResponse(appsResponse);
+        const nextContacts = await readJsonResponse(contactsResponse);
+
+        if (isMounted) {
+          setApps(
+            Array.isArray(nextApps.applications)
+              ? nextApps.applications
+              : nextApps,
+          );
+          setContacts(
+            Array.isArray(nextContacts.contacts)
+              ? nextContacts.contacts
+              : nextContacts,
+          );
+        }
+      } catch (loadError) {
+        if (isMounted) {
+          setDemoMode(true);
+          setApps(DEMO_APPS);
+          setContacts(DEMO_CONTACTS);
+          setError(
+            loadError instanceof Error
+              ? loadError.message
+              : "Unable to reach the API. Showing demo data.",
+          );
+        }
+      } finally {
+        if (isMounted) setLoading(false);
+      }
     }
-  };
 
-  const showToast = (msg) => {
-    setToast(msg);
-    setTimeout(() => setToast(""), 2200);
-  };
+    loadDashboardData();
+    return () => {
+      isMounted = false;
+    };
+  }, [demoMode]);
 
-  const filtered = useMemo(() => {
-    if (!apps) return [];
-    if (filter === "all") return apps;
-    return apps.filter((a) => a.status === filter);
-  }, [apps, filter]);
+  const filteredApps = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    return apps.filter((application) => {
+      const matchesStatus =
+        statusFilter === "all" || application.status === statusFilter;
+      const matchesSearch =
+        !query ||
+        application.company.toLowerCase().includes(query) ||
+        application.role.toLowerCase().includes(query);
+      return matchesStatus && matchesSearch;
+    });
+  }, [apps, search, statusFilter]);
 
-  const staleCount = useMemo(() => {
-    if (!apps) return 0;
-    return apps.filter((a) => (a.status === "applied" || a.status === "interview") && daysSince(a.date_applied) > 14).length;
-  }, [apps]);
-
-  const counts = useMemo(() => {
-    const c = { all: apps?.length || 0 };
-    Object.keys(STATUS_META).forEach((k) => (c[k] = 0));
-    apps?.forEach((a) => (c[a.status] = (c[a.status] || 0) + 1));
-    return c;
-  }, [apps]);
-
-  const updateStatus = async (id, newStatus) => {
-    const next = apps.map((a) => (a.id === id ? { ...a, status: newStatus } : a));
-    await persist(next);
-    setSelected((s) => (s ? { ...s, status: newStatus } : s));
-    showToast("Status updated");
-  };
-
-  const addApplication = async (form) => {
-    setSaving(true);
-    const id = "app-" + String((apps.length + 1)).padStart(3, "0") + "-" + Math.random().toString(36).slice(2, 5);
-    const next = [{ id, ...form }, ...apps];
-    await persist(next);
-    setSaving(false);
-    setAdding(false);
-    showToast("Application added");
-  };
-
-  if (!apps) {
-    return (
-      <div className="jt-root">
-        <Style />
-        <div className="loading">Opening the archive…</div>
-      </div>
+  const statusCounts = useMemo(() => {
+    return Object.keys(STATUS_META).reduce(
+      (counts, key) => {
+        counts[key] = apps.filter((app) => app.status === key).length;
+        return counts;
+      },
+      { all: apps.length },
     );
-  }
+  }, [apps]);
 
-  const tabs = [
-    { key: "all", label: "All" },
-    { key: "applied", label: STATUS_META.applied.label },
-    { key: "interview", label: STATUS_META.interview.label },
-    { key: "offer", label: STATUS_META.offer.label },
-    { key: "rejected", label: STATUS_META.rejected.label },
-    { key: "no_response", label: STATUS_META.no_response.label },
-  ];
+  const boardColumns = Object.keys(STATUS_META);
 
   return (
-    <div className="jt-root" dir="ltr">
-      <Style />
-
-      <header className="jt-header">
+    <div className="dashboard-shell">
+      <style>{styles}</style>
+      <header className="topbar">
         <div>
-          <div className="eyebrow">APPLICATION ARCHIVE · {TODAY.toISOString().slice(0, 10)}</div>
-          <h1>Job Application Tracker</h1>
+          <p className="eyebrow">JOB TRACKER</p>
+          <h1>{labels.title}</h1>
         </div>
-        <button className="btn-primary" onClick={() => setAdding(true)}>+ New Application</button>
+        <div className="toolbar" aria-label="Dashboard controls">
+          <label className="search" aria-label={labels.search}>
+            <span aria-hidden="true">⌕</span>
+            <input
+              type="search"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder={labels.search}
+            />
+          </label>
+          <button
+            className="chip-button"
+            onClick={() =>
+              setPreferences((current) => ({
+                ...current,
+                theme: current.theme === "light" ? "dark" : "light",
+              }))
+            }
+            aria-pressed={preferences.theme === "dark"}
+          >
+            {labels.darkMode}
+          </button>
+          <button
+            className="chip-button"
+            onClick={() =>
+              setPreferences((current) => ({
+                ...current,
+                lang: current.lang === "en" ? "ar" : "en",
+              }))
+            }
+            aria-pressed={preferences.lang === "ar"}
+          >
+            {labels.language}
+          </button>
+          <button
+            className="chip-button"
+            onClick={() => setDemoMode((current) => !current)}
+            aria-pressed={demoMode}
+          >
+            {labels.demoMode}
+          </button>
+        </div>
       </header>
 
-      {staleCount > 0 && (
-        <div className="alert-strip">
-          {staleCount} {staleCount === 1 ? "application" : "applications"} need follow-up (no response for 14+ days)
-        </div>
-      )}
+      <section className="overview-grid" aria-label={labels.summary}>
+        <SummaryCard
+          title={labels.summary}
+          value={String(apps.length)}
+          hint="applications"
+        />
+        <SummaryCard
+          title={labels.followUps}
+          value={String(apps.filter((app) => shouldFollowUp(app, now)).length)}
+          hint="need attention"
+        />
+        <SummaryCard
+          title={labels.interviews}
+          value={String(
+            apps.filter((app) => app.status === "interview").length,
+          )}
+          hint="in progress"
+        />
+      </section>
 
-      <nav className="tabs">
-        {tabs.map((t) => (
+      <section className="filters" aria-label="Status filters">
+        <button
+          className={statusFilter === "all" ? "filter active" : "filter"}
+          onClick={() => setStatusFilter("all")}
+          aria-pressed={statusFilter === "all"}
+        >
+          All ({statusCounts.all})
+        </button>
+        {Object.entries(STATUS_META).map(([key, meta]) => (
           <button
-            key={t.key}
-            className={"tab" + (filter === t.key ? " tab-active" : "")}
-            onClick={() => setFilter(t.key)}
+            key={key}
+            className={statusFilter === key ? "filter active" : "filter"}
+            onClick={() => setStatusFilter(key)}
+            aria-pressed={statusFilter === key}
           >
-            {t.label} <span className="tab-count">{counts[t.key] || 0}</span>
+            {meta.label} ({statusCounts[key] ?? 0})
           </button>
         ))}
-      </nav>
+      </section>
 
-      {filtered.length === 0 ? (
-        <div className="empty">No applications in this category yet.</div>
-      ) : (
-        <div className="grid">
-          {filtered.map((app) => (
-            <FolderCard key={app.id} app={app} onOpen={setSelected} />
+      <section className="view-tabs" aria-label="Dashboard views">
+        {["board", "timeline", "contacts"].map((viewName) => (
+          <button
+            key={viewName}
+            className={
+              selectedView === viewName ? "view-tab active" : "view-tab"
+            }
+            onClick={() => setSelectedView(viewName)}
+            aria-pressed={selectedView === viewName}
+          >
+            {strings[preferences.lang]?.[viewName] ?? viewName}
+          </button>
+        ))}
+      </section>
+
+      {error ? (
+        <div className="error-banner" role="alert">
+          {error}
+        </div>
+      ) : null}
+
+      {loading ? (
+        <div className="state-panel">{labels.loading}</div>
+      ) : selectedView === "board" ? (
+        <div className="board" aria-label="Application board">
+          {boardColumns.map((statusKey) => (
+            <div key={statusKey} className="board-column">
+              <h2>{STATUS_META[statusKey].label}</h2>
+              {filteredApps.filter((app) => app.status === statusKey).length ===
+              0 ? (
+                <div className="empty-column">No entries</div>
+              ) : (
+                filteredApps
+                  .filter((app) => app.status === statusKey)
+                  .map((application) => (
+                    <article
+                      key={application.id}
+                      className="application-card"
+                      tabIndex={0}
+                    >
+                      <div className="card-topline">
+                        <span
+                          className="pill"
+                          style={{
+                            background: STATUS_META[application.status].color,
+                          }}
+                        >
+                          {STATUS_META[application.status].label}
+                        </span>
+                        <span className="meta-id">{application.id}</span>
+                      </div>
+                      <h3>{application.role}</h3>
+                      <p>{application.company}</p>
+                      <div className="subline">
+                        <span>{formatDate(application.date_applied)}</span>
+                        <span>
+                          {SOURCE_LABEL[application.source] ??
+                            application.source}
+                        </span>
+                      </div>
+                    </article>
+                  ))
+              )}
+            </div>
           ))}
         </div>
-      )}
-
-      {selected && (
-        <Modal onClose={() => setSelected(null)}>
-          <div className="detail-head">
-            <div className="folder-tab">{selected.id}</div>
-            <button className="close-x" onClick={() => setSelected(null)}>×</button>
-          </div>
-          <h2>{selected.role}</h2>
-          <div className="detail-company">{selected.company}</div>
-          <div className="detail-row"><span>Date applied</span><span>{selected.date_applied}</span></div>
-          <div className="detail-row"><span>Source</span><span>{SOURCE_LABEL[selected.source] || selected.source}</span></div>
-          {selected.notes && <div className="detail-notes">{selected.notes}</div>}
-
-          <div className="status-picker">
-            <div className="status-picker-label">Update status</div>
-            <div className="status-options">
-              {Object.entries(STATUS_META).map(([key, meta]) => (
-                <button
-                  key={key}
-                  className={"status-opt" + (selected.status === key ? " status-opt-active" : "")}
-                  style={{ "--stamp-color": meta.color }}
-                  onClick={() => updateStatus(selected.id, key)}
-                >
-                  {meta.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        </Modal>
-      )}
-
-      {adding && (
-        <Modal onClose={() => !saving && setAdding(false)}>
-          <AddForm onCancel={() => setAdding(false)} onSubmit={addApplication} saving={saving} />
-        </Modal>
-      )}
-
-      {toast && <div className="toast">{toast}</div>}
-
-      <footer className="jt-footer">
-        <div className="footer-row">
-          <div className="footer-block">
-            <div className="footer-label">Team</div>
-            <div className="footer-team">
-              {TEAM.map((name) => (
-                <span key={name} className="team-chip">{name}</span>
-              ))}
-            </div>
-          </div>
-          <div className="footer-block footer-repo">
-            <div className="footer-label">Repository</div>
-            <a href={REPO_URL} target="_blank" rel="noopener noreferrer" className="repo-link">
-              <span className="repo-name">{REPO_LABEL}</span>
-              <span className="repo-arrow">↗</span>
-            </a>
-            <div className="repo-desc">{REPO_DESC}</div>
-          </div>
+      ) : selectedView === "timeline" ? (
+        <div className="timeline" aria-label="Application timeline">
+          {[...filteredApps]
+            .sort(
+              (left, right) =>
+                new Date(right.date_applied) - new Date(left.date_applied),
+            )
+            .map((application) => (
+              <div key={application.id} className="timeline-item">
+                <div
+                  className="timeline-dot"
+                  style={{ background: STATUS_META[application.status].color }}
+                />
+                <div className="timeline-body">
+                  <strong>{application.company}</strong>
+                  <span>{application.role}</span>
+                  <small>{formatDate(application.date_applied)}</small>
+                </div>
+              </div>
+            ))}
         </div>
-        <div className="disclaimer">
-          This is a standalone dashboard — edits here are saved locally in the browser and are not synced automatically with the live my-first-mcp server.
+      ) : (
+        <div className="contact-list" aria-label="Contacts list">
+          {contacts.length === 0 ? (
+            <div className="state-panel">No contacts available.</div>
+          ) : (
+            contacts.map((contact) => (
+              <article key={contact.id} className="contact-card">
+                <div>
+                  <h3>{contact.person}</h3>
+                  <p>{contact.company}</p>
+                </div>
+                <span>{contact.last_message_date ?? "No recent message"}</span>
+              </article>
+            ))
+          )}
         </div>
-      </footer>
+      )}
+
+      {!filteredApps.length && !loading ? (
+        <div className="state-panel">{labels.noResults}</div>
+      ) : null}
+
+      <aside className="sidebar-panel" aria-label={labels.connectClaude}>
+        <h2>{labels.connectClaude}</h2>
+        <p>Use the following MCP config with Claude Desktop or VS Code:</p>
+        <pre>{`{
+  "mcpServers": {
+    "job-tracker": {
+      "command": "node",
+      "args": ["dist/index.js"]
+    }
+  }
+}`}</pre>
+      </aside>
     </div>
   );
 }
 
-function AddForm({ onCancel, onSubmit, saving }) {
-  const [company, setCompany] = useState("");
-  const [role, setRole] = useState("");
-  const [date, setDate] = useState(TODAY.toISOString().slice(0, 10));
-  const [source, setSource] = useState("cold_apply");
-  const [status, setStatus] = useState("applied");
-  const [notes, setNotes] = useState("");
-
-  const canSubmit = company.trim() && role.trim() && date;
-
+function SummaryCard({ title, value, hint }) {
   return (
-    <form
-      className="add-form"
-      onSubmit={(e) => {
-        e.preventDefault();
-        if (!canSubmit) return;
-        onSubmit({ company: company.trim(), role: role.trim(), date_applied: date, source, status, notes: notes.trim() });
-      }}
-    >
-      <h2>New Application</h2>
-
-      <label>Company
-        <input value={company} onChange={(e) => setCompany(e.target.value)} placeholder="e.g. Google" required />
-      </label>
-
-      <label>Role
-        <input value={role} onChange={(e) => setRole(e.target.value)} placeholder="e.g. Frontend Developer" required />
-      </label>
-
-      <div className="form-row">
-        <label>Date applied
-          <input type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
-        </label>
-        <label>Source
-          <select value={source} onChange={(e) => setSource(e.target.value)}>
-            {Object.entries(SOURCE_LABEL).map(([k, v]) => (
-              <option key={k} value={k}>{v}</option>
-            ))}
-          </select>
-        </label>
-      </div>
-
-      <label>Current status
-        <select value={status} onChange={(e) => setStatus(e.target.value)}>
-          {Object.entries(STATUS_META).map(([k, v]) => (
-            <option key={k} value={k}>{v.label}</option>
-          ))}
-        </select>
-      </label>
-
-      <label>Notes
-        <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} placeholder="Optional" />
-      </label>
-
-      <div className="form-actions">
-        <button type="button" className="btn-ghost" onClick={onCancel} disabled={saving}>Cancel</button>
-        <button type="submit" className="btn-primary" disabled={!canSubmit || saving}>
-          {saving ? "Saving…" : "Save application"}
-        </button>
-      </div>
-    </form>
+    <div className="summary-card" aria-label={title}>
+      <span>{title}</span>
+      <strong>{value}</strong>
+      <small>{hint}</small>
+    </div>
   );
 }
 
-function Style() {
-  return (
-    <style>{`
-      @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700;900&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap');
+const styles = `
+  :root {
+    --bg: #f6f2ea;
+    --panel: #fffaf2;
+    --panel-strong: #efe3cc;
+    --card: #fff;
+    --text: #1c2431;
+    --muted: #667286;
+    --border: rgba(28, 36, 49, 0.12);
+    --chip: #ece2cf;
+    --shadow: 0 14px 28px rgba(28, 36, 49, 0.08);
+  }
 
-      .jt-root {
-        --paper: #F2E9D8;
-        --paper-dark: #E4D6BC;
-        --card: #FBF7EE;
-        --ink: #20303F;
-        --ink-soft: #5B6B7A;
-        --line: rgba(32,48,63,0.16);
-        --red-stamp: #A63D3D;
-        --green-stamp: #4F7A5C;
-        --amber-stamp: #B8823A;
-        --blue-stamp: #3B5C7E;
+  html[data-theme="dark"] {
+    --bg: #111827;
+    --panel: #1f2937;
+    --panel-strong: #0f172a;
+    --card: #111827;
+    --text: #e5e7eb;
+    --muted: #9ca3af;
+    --border: rgba(148, 163, 184, 0.22);
+    --chip: #374151;
+    --shadow: 0 14px 28px rgba(15, 23, 42, 0.5);
+  }
 
-        background: var(--paper);
-        background-image:
-          radial-gradient(circle at 1px 1px, rgba(32,48,63,0.05) 1px, transparent 0);
-        background-size: 18px 18px;
-        color: var(--ink);
-        font-family: 'Inter', sans-serif;
-        border-radius: 16px;
-        padding: 28px;
-        max-width: 100%;
-        box-sizing: border-box;
-        position: relative;
-      }
-      .jt-root * { box-sizing: border-box; }
+  * { box-sizing: border-box; }
 
-      .loading { font-family: 'Fraunces', serif; font-weight: 700; padding: 40px; text-align: center; color: var(--ink-soft); }
+  body {
+    margin: 0;
+    font-family: Inter, system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
 
-      .jt-header {
-        display: flex;
-        align-items: flex-end;
-        justify-content: space-between;
-        gap: 16px;
-        border-bottom: 2px solid var(--ink);
-        padding-bottom: 16px;
-        margin-bottom: 18px;
-        flex-wrap: wrap;
-      }
-      .eyebrow {
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 11px;
-        letter-spacing: 0.08em;
-        color: var(--ink-soft);
-        margin-bottom: 6px;
-      }
-      .jt-header h1 {
-        font-family: 'Fraunces', serif;
-        font-weight: 800;
-        font-size: 32px;
-        margin: 0;
-        letter-spacing: -0.01em;
-      }
+  button, input, textarea { font: inherit; }
 
-      .btn-primary {
-        font-family: 'Inter', sans-serif;
-        font-weight: 700;
-        background: var(--ink);
-        color: var(--paper);
-        border: none;
-        border-radius: 8px;
-        padding: 11px 20px;
-        cursor: pointer;
-        font-size: 14px;
-        transition: transform 0.15s ease, background 0.15s ease;
-      }
-      .btn-primary:hover { transform: translateY(-1px); background: #16222E; }
-      .btn-primary:disabled { opacity: 0.5; cursor: default; transform: none; }
+  .dashboard-shell {
+    max-width: 1240px;
+    margin: 0 auto;
+    padding: 28px;
+    background: var(--bg);
+    color: var(--text);
+  }
 
-      .btn-ghost {
-        font-family: 'Inter', sans-serif;
-        font-weight: 600;
-        background: transparent;
-        color: var(--ink-soft);
-        border: 1.5px solid var(--line);
-        border-radius: 8px;
-        padding: 10px 18px;
-        cursor: pointer;
-        font-size: 14px;
-      }
-      .btn-ghost:hover { border-color: var(--ink-soft); }
+  .topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+  }
 
-      .alert-strip {
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 12.5px;
-        background: #F3E3C9;
-        border: 1px solid var(--amber-stamp);
-        color: #7A551F;
-        border-radius: 8px;
-        padding: 9px 14px;
-        margin-bottom: 16px;
-      }
+  .eyebrow {
+    color: var(--muted);
+    letter-spacing: 0.14em;
+    font-size: 11px;
+    margin: 0 0 6px;
+  }
 
-      .tabs {
-        display: flex;
-        gap: 6px;
-        flex-wrap: wrap;
-        margin-bottom: 20px;
-      }
-      .tab {
-        font-family: 'Inter', sans-serif;
-        font-weight: 500;
-        font-size: 13px;
-        background: var(--paper-dark);
-        border: 1px solid transparent;
-        color: var(--ink-soft);
-        padding: 7px 14px;
-        border-radius: 999px;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-      }
-      .tab-active { background: var(--ink); color: var(--paper); }
-      .tab-count { font-family: 'JetBrains Mono', monospace; font-size: 11px; opacity: 0.75; }
+  h1 {
+    margin: 0;
+    font-size: clamp(2rem, 3vw, 3rem);
+  }
 
-      .empty {
-        text-align: center;
-        color: var(--ink-soft);
-        padding: 50px 20px;
-        font-size: 14px;
-        border: 1.5px dashed var(--line);
-        border-radius: 12px;
-      }
+  .toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  }
 
-      .grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-        gap: 16px;
-      }
+  .search {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 0 12px;
+    min-width: 260px;
+    height: 42px;
+  }
 
-      .folder-card {
-        text-align: left;
-        background: var(--card);
-        border: 1px solid var(--line);
-        border-radius: 12px 4px 12px 12px;
-        padding: 18px 16px 16px;
-        cursor: pointer;
-        position: relative;
-        overflow: hidden;
-        box-shadow: 0 1px 0 var(--line);
-        transition: transform 0.15s ease, box-shadow 0.15s ease;
-        font-family: inherit;
-      }
-      .folder-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 18px rgba(32,48,63,0.12);
-      }
-      .folder-tab {
-        position: absolute;
-        top: 0;
-        right: 0;
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 10.5px;
-        color: var(--paper);
-        background: var(--ink);
-        padding: 3px 9px;
-        border-radius: 0 0 0 8px;
-        letter-spacing: 0.03em;
-      }
-      .folder-role {
-        font-family: 'Fraunces', serif;
-        font-weight: 700;
-        font-size: 16px;
-        margin-top: 14px;
-      }
-      .folder-company {
-        font-size: 13.5px;
-        color: var(--ink-soft);
-        margin-top: 2px;
-      }
-      .folder-meta {
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 10.5px;
-        color: var(--ink-soft);
-        margin-top: 10px;
-        display: flex;
-        gap: 6px;
-        align-items: center;
-      }
-      .dot { opacity: 0.5; }
-      .stale-flag {
-        margin-top: 8px;
-        font-size: 11px;
-        color: var(--red-stamp);
-        font-weight: 600;
-      }
+  .search input {
+    border: 0;
+    background: transparent;
+    color: var(--text);
+    width: 100%;
+    outline: none;
+  }
 
-      .stamp {
-        margin-top: 14px;
-        display: inline-block;
-        font-family: 'Inter', sans-serif;
-        font-weight: 800;
-        font-size: 12px;
-        letter-spacing: 0.04em;
-        color: var(--stamp-color);
-        border: 2px solid var(--stamp-color);
-        border-radius: 6px;
-        padding: 3px 10px;
-        transform: rotate(var(--stamp-rot));
-      }
+  .chip-button, .filter, .view-tab {
+    border: 1px solid var(--border);
+    background: var(--panel);
+    color: var(--text);
+    border-radius: 999px;
+    padding: 9px 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
 
-      .modal-backdrop {
-        position: fixed;
-        inset: 0;
-        background: rgba(32,48,63,0.45);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 50;
-        padding: 20px;
-      }
-      .modal-sheet {
-        background: var(--card);
-        border-radius: 14px;
-        padding: 22px 24px 24px;
-        width: 100%;
-        max-width: 380px;
-        max-height: 85vh;
-        overflow-y: auto;
-        box-shadow: 0 20px 50px rgba(0,0,0,0.25);
-      }
+  .chip-button:hover, .filter:hover, .view-tab:hover {
+    background: var(--panel-strong);
+  }
 
-      .detail-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-      .detail-head .folder-tab { position: static; }
-      .close-x {
-        background: none; border: none; font-size: 22px; line-height: 1; cursor: pointer; color: var(--ink-soft);
-      }
-      .modal-sheet h2 {
-        font-family: 'Fraunces', serif;
-        font-weight: 800;
-        font-size: 20px;
-        margin: 4px 0 2px;
-      }
-      .detail-company { color: var(--ink-soft); font-size: 14px; margin-bottom: 14px; }
-      .detail-row {
-        display: flex;
-        justify-content: space-between;
-        font-size: 13px;
-        padding: 8px 0;
-        border-top: 1px solid var(--line);
-        color: var(--ink-soft);
-      }
-      .detail-row span:last-child { color: var(--ink); font-family: 'JetBrains Mono', monospace; font-size: 12px; }
-      .detail-notes {
-        margin-top: 10px;
-        font-size: 13px;
-        background: var(--paper-dark);
-        border-radius: 8px;
-        padding: 10px 12px;
-        color: var(--ink);
-      }
+  .filter.active, .view-tab.active {
+    background: var(--text);
+    color: var(--bg);
+    border-color: var(--text);
+  }
 
-      .status-picker { margin-top: 18px; }
-      .status-picker-label { font-size: 12px; color: var(--ink-soft); margin-bottom: 8px; font-weight: 600; }
-      .status-options { display: flex; flex-wrap: wrap; gap: 6px; }
-      .status-opt {
-        font-family: 'Inter', sans-serif;
-        font-weight: 700;
-        font-size: 12px;
-        background: transparent;
-        border: 1.5px solid var(--stamp-color);
-        color: var(--stamp-color);
-        border-radius: 6px;
-        padding: 6px 10px;
-        cursor: pointer;
-      }
-      .status-opt-active { background: var(--stamp-color); color: var(--card); }
+  .overview-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(160px, 1fr));
+    gap: 12px;
+    margin-bottom: 18px;
+  }
 
-      .add-form { display: flex; flex-direction: column; gap: 12px; }
-      .add-form h2 { font-family: 'Fraunces', serif; font-weight: 800; font-size: 19px; margin: 0 0 4px; }
-      .add-form label { display: flex; flex-direction: column; gap: 5px; font-size: 12.5px; color: var(--ink-soft); font-weight: 600; }
-      .add-form input, .add-form select, .add-form textarea {
-        font-family: 'Inter', sans-serif;
-        font-size: 14px;
-        color: var(--ink);
-        background: var(--paper);
-        border: 1.5px solid var(--line);
-        border-radius: 8px;
-        padding: 9px 10px;
-        outline: none;
-        resize: vertical;
-      }
-      .add-form input:focus, .add-form select:focus, .add-form textarea:focus { border-color: var(--ink); }
-      .form-row { display: flex; gap: 10px; }
-      .form-row label { flex: 1; }
-      .form-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 6px; }
+  .summary-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 18px;
+    box-shadow: var(--shadow);
+  }
 
-      .toast {
-        position: fixed;
-        bottom: 24px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: var(--ink);
-        color: var(--paper);
-        font-family: 'Inter', sans-serif;
-        font-weight: 600;
-        font-size: 13px;
-        padding: 10px 18px;
-        border-radius: 8px;
-        z-index: 60;
-      }
+  .summary-card span {
+    display: block;
+    color: var(--muted);
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
 
-      .jt-footer {
-        margin-top: 26px;
-        border-top: 1px dashed var(--line);
-        padding-top: 16px;
-      }
-      .footer-row {
-        display: flex;
-        justify-content: space-between;
-        gap: 24px;
-        flex-wrap: wrap;
-      }
-      .footer-block { flex: 1; min-width: 200px; }
-      .footer-label {
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 10px;
-        letter-spacing: 0.1em;
-        text-transform: uppercase;
-        color: var(--ink-soft);
-        margin-bottom: 8px;
-      }
-      .footer-team { display: flex; flex-wrap: wrap; gap: 6px; }
-      .team-chip {
-        font-family: 'Inter', sans-serif;
-        font-size: 12px;
-        font-weight: 500;
-        background: var(--paper-dark);
-        border-radius: 999px;
-        padding: 5px 12px;
-        color: var(--ink);
-      }
-      .repo-link {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 13px;
-        font-weight: 600;
-        color: var(--ink);
-        text-decoration: none;
-        border-bottom: 1.5px solid var(--ink);
-        padding-bottom: 1px;
-      }
-      .repo-link:hover { color: var(--amber-stamp); border-color: var(--amber-stamp); }
-      .repo-arrow { font-size: 13px; }
-      .repo-desc {
-        font-size: 12px;
-        color: var(--ink-soft);
-        margin-top: 6px;
-        line-height: 1.5;
-        max-width: 340px;
-      }
+  .summary-card strong {
+    display: block;
+    margin: 12px 0 6px;
+    font-size: clamp(1.6rem, 2vw, 2.3rem);
+  }
 
-      .disclaimer {
-        margin-top: 16px;
-        font-size: 11px;
-        color: var(--ink-soft);
-        text-align: center;
-      }
+  .summary-card small {
+    color: var(--muted);
+  }
 
-      @media (max-width: 480px) {
-        .jt-root { padding: 18px; }
-        .jt-header h1 { font-size: 24px; }
-        .grid { grid-template-columns: 1fr 1fr; gap: 10px; }
-        .footer-row { flex-direction: column; gap: 16px; }
-      }
-    `}</style>
-  );
-}
+  .filters, .view-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 18px;
+  }
+
+  .board {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 18px;
+    margin-top: 16px;
+  }
+
+  .board-column {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 14px;
+    min-height: 220px;
+  }
+
+  .board-column h2 {
+    margin: 0 0 12px;
+    font-size: 1rem;
+  }
+
+  .application-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px;
+    margin-bottom: 12px;
+    box-shadow: var(--shadow);
+  }
+
+  .card-topline {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .pill {
+    display: inline-flex;
+    padding: 5px 10px;
+    border-radius: 999px;
+    color: white;
+    font-size: 0.72rem;
+    font-weight: 700;
+  }
+
+  .meta-id {
+    color: var(--muted);
+    font-size: 0.7rem;
+  }
+
+  .application-card h3 {
+    margin: 0 0 4px;
+    font-size: 1.1rem;
+  }
+
+  .application-card p {
+    margin: 0 0 10px;
+    color: var(--muted);
+  }
+
+  .subline {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 0.72rem;
+    color: var(--muted);
+  }
+
+  .timeline {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .timeline-item {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .timeline-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .timeline-body {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .timeline-body span, .timeline-body small {
+    color: var(--muted);
+  }
+
+  .contact-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+    margin-top: 16px;
+  }
+
+  .contact-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px;
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .contact-card h3 {
+    margin: 0 0 4px;
+  }
+
+  .contact-card p, .contact-card span {
+    margin: 0;
+    color: var(--muted);
+  }
+
+  .state-panel, .empty-column {
+    background: var(--panel);
+    border: 1px dashed var(--border);
+    border-radius: 14px;
+    padding: 24px;
+    text-align: center;
+    color: var(--muted);
+  }
+
+  .sidebar-panel {
+    margin-top: 24px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 18px;
+    box-shadow: var(--shadow);
+  }
+
+  .sidebar-panel h2 {
+    margin: 0 0 8px;
+  }
+
+  .sidebar-panel pre {
+    white-space: pre-wrap;
+    word-break: break-word;
+    background: var(--panel-strong);
+    border-radius: 12px;
+    padding: 12px;
+    overflow-x: auto;
+  }
+
+  .error-banner {
+    margin-bottom: 12px;
+    background: rgba(166, 61, 61, 0.18);
+    border: 1px solid rgba(166, 61, 61, 0.4);
+    color: #a00d0d;
+    border-radius: 12px;
+    padding: 10px 12px;
+  }
+
+  @media (max-width: 720px) {
+    .dashboard-shell { padding: 18px; }
+    .overview-grid { grid-template-columns: 1fr; }
+    .search { min-width: 100%; }
+  }
+`;
+
+export default App;

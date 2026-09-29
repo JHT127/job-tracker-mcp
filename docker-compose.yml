@@ -1,0 +1,24 @@
+services:
+  tracker:
+    build:
+      context: .
+    container_name: job-tracker-mcp
+    environment:
+      LOG_LEVEL: info
+      MCP_HTTP_MODE: "false"
+      REST_API_MODE: "false"
+    volumes:
+      - ./data:/app/data
+      - ./tracker.config.json:/app/tracker.config.json:ro
+    stdin_open: true
+    tty: true
+
+  dashboard:
+    image: nginx:alpine
+    container_name: job-tracker-dashboard
+    ports:
+      - "8080:80"
+    volumes:
+      - ./job-tracker-dashboard/job-tracker-dashboard/dist:/usr/share/nginx/html:ro
+    depends_on:
+      - tracker
