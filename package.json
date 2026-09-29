@@ -17,6 +17,14 @@
   "exports": {
     ".": "./dist/index.js"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JHT127/my-first-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/JHT127/my-first-mcp/issues"
+  },
+  "homepage": "https://github.com/JHT127/my-first-mcp#readme",
   "scripts": {
     "dev": "tsx src/index.ts",
     "build": "tsc -p tsconfig.build.json",
@@ -37,8 +45,14 @@
       "prettier --write"
     ]
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "job-tracker",
+    "career",
+    "sqlite"
+  ],
+  "author": "Joud Thaher",
   "license": "ISC",
   "dependencies": {
     "@modelcontextprotocol/server": "^2.0.0-beta.5",
