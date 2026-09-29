@@ -18,6 +18,9 @@ data/applications.sqlite-wal
 # Logs
 npm-debug.log*
 *.log
+server.err
+server.out
+*.tgz
 
 # Editor/OS files
 .vscode/
