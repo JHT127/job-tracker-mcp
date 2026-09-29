@@ -1,12 +1,8 @@
 import * as z from "zod/v4";
 
-export const applicationStatusSchema = z.enum([
-  "applied",
-  "interview",
-  "offer",
-  "rejected",
-  "no_response",
-]);
+import { getTrackerStatusSchema } from "../lib/trackerConfig.js";
+
+export const applicationStatusSchema = getTrackerStatusSchema();
 
 export const applicationSourceSchema = z.enum([
   "cold_apply",
