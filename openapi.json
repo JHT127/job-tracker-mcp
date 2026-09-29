@@ -1,0 +1,146 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Job Application Tracker API",
+    "version": "1.0.0",
+    "description": "REST API for job applications, contacts, interviews, and reports."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3001",
+      "description": "Local development server"
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "summary": "Health check",
+        "responses": {
+          "200": {
+            "description": "Healthy"
+          }
+        }
+      }
+    },
+    "/applications": {
+      "get": {
+        "summary": "List applications",
+        "responses": {
+          "200": {
+            "description": "Applications"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create application",
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        }
+      }
+    },
+    "/applications/{id}": {
+      "get": {
+        "summary": "Get application",
+        "responses": {
+          "200": {
+            "description": "Application"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update application",
+        "responses": {
+          "200": {
+            "description": "Updated"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete application",
+        "responses": {
+          "200": {
+            "description": "Deleted"
+          }
+        }
+      }
+    },
+    "/applications/{id}/status": {
+      "patch": {
+        "summary": "Update application status",
+        "responses": {
+          "200": {
+            "description": "Updated"
+          }
+        }
+      }
+    },
+    "/contacts": {
+      "get": {
+        "summary": "List contacts",
+        "responses": {
+          "200": {
+            "description": "Contacts"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create contact",
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        }
+      }
+    },
+    "/interviews": {
+      "get": {
+        "summary": "List interviews",
+        "responses": {
+          "200": {
+            "description": "Interviews"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create interview",
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        }
+      }
+    },
+    "/stats": {
+      "get": {
+        "summary": "Get stats",
+        "responses": {
+          "200": {
+            "description": "Stats"
+          }
+        }
+      }
+    },
+    "/next-actions": {
+      "get": {
+        "summary": "Get next actions",
+        "responses": {
+          "200": {
+            "description": "Actions"
+          }
+        }
+      }
+    },
+    "/webhooks": {
+      "post": {
+        "summary": "Register webhook",
+        "responses": {
+          "201": {
+            "description": "Created"
+          }
+        }
+      }
+    }
+  }
+}
