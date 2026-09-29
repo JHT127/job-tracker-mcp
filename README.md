@@ -101,6 +101,8 @@ Important environment variables:
 
 ## Dashboard
 
+Live demo: https://jht127.github.io/my-first-mcp/
+
 ```bash
 cd job-tracker-dashboard/job-tracker-dashboard
 npm ci
@@ -114,7 +116,7 @@ For a production build, run `npm run build`. The dashboard uses the API first an
 - [Architecture](docs/architecture.md)
 - [REST API](docs/api.md)
 - [Generated MCP tool reference](docs/tool-reference.md)
-- [Demo script and screenshot instructions](docs/demo-script.md)
+- [Live demo walkthrough](docs/demo-script.md)
 - [Threat model](docs/threat-model.md)
 - [Security policy](SECURITY.md)
 - [Contributing](CONTRIBUTING.md)
@@ -146,11 +148,9 @@ flowchart LR
   Core --> Integrations[Optional integrations]
 ```
 
-## Screenshots
+## Live demo
 
-Screenshots are intentionally placeholders until a real local run is captured. Follow [docs/demo-script.md](docs/demo-script.md), capture the dashboard at 1440x900 and 390x844, and save reviewed images under `docs/screenshots/` with descriptive names.
-
-Recommended captures: overview board, timeline, contacts, dark mode, Arabic RTL, and the Connect Claude panel.
+The hosted dashboard runs in `VITE_DEMO=true` mode with fictional in-memory data, so visitors can try the board, timeline, contacts, search, theme, language, and Connect Claude views without backend credentials. See [docs/demo-script.md](docs/demo-script.md) for the walkthrough.
 
 ## Development
 
