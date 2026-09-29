@@ -1,11 +1,21 @@
 {
-  "name": "my-first-mcp",
+  "name": "job-tracker-mcp",
   "version": "1.0.0",
   "type": "module",
-  "description": "",
+  "description": "Job tracking MCP server with REST API, dashboard, and package-ready CLI",
   "main": "./dist/index.js",
   "bin": {
     "job-tracker-mcp": "./dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "SECURITY.md",
+    "tracker.config.json"
+  ],
+  "exports": {
+    ".": "./dist/index.js"
   },
   "scripts": {
     "dev": "tsx src/index.ts",
@@ -15,6 +25,9 @@
     "format": "prettier --write .",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
+    "generate:tools": "tsx scripts/generate-tool-reference.ts",
+    "check:tools": "tsx scripts/generate-tool-reference.ts --check",
+    "dev:api": "REST_API_MODE=true tsx src/index.ts",
     "inspect": "npx @modelcontextprotocol/inspector npx tsx src/index.ts",
     "prepare": "husky"
   },
@@ -32,6 +45,8 @@
     "better-sqlite3": "11.10.0",
     "csv-parse": "^7.0.3",
     "csv-stringify": "^6.9.0",
+    "pino": "^10.3.1",
+    "supertest": "^7.3.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
@@ -39,6 +54,7 @@
     "@modelcontextprotocol/client": "^2.2.0",
     "@types/better-sqlite3": "^9.6.0",
     "@types/node": "^26.1.2",
+    "@types/supertest": "^7.2.1",
     "@vitest/coverage-v8": "^5.0.2",
     "eslint": "^10.11.0",
     "globals": "^17.12.0",
