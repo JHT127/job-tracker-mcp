@@ -19,12 +19,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/JHT127/my-first-mcp.git"
+    "url": "git+https://github.com/JHT127/job-tracker-mcp.git"
   },
   "bugs": {
-    "url": "https://github.com/JHT127/my-first-mcp/issues"
+    "url": "https://github.com/JHT127/job-tracker-mcp/issues"
   },
-  "homepage": "https://github.com/JHT127/my-first-mcp#readme",
+  "homepage": "https://github.com/JHT127/job-tracker-mcp#readme",
   "scripts": {
     "dev": "tsx src/index.ts",
     "build": "tsc -p tsconfig.build.json",
