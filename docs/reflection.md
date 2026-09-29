@@ -21,7 +21,7 @@
 
 > Built a Model Context Protocol (MCP) server in **TypeScript** with **Zod**-validated schemas, shipping **4 working tools** (add/list/update job applications, next-action suggestions) that connect to Claude Desktop over stdio. Led/contributed to a security pass (input validation, allowlisting, output limits) and full documentation (design, threat model, test plan). Published to a **public GitHub repo** with a working demo and test suite.
 
-*(Trim to 2–3 sentences on the resume itself — the version above is the "everything" draft to cut down from.)*
+_(Trim to 2–3 sentences on the resume itself — the version above is the "everything" draft to cut down from.)_
 
 ## LinkedIn draft (publishing optional)
 
@@ -40,4 +40,5 @@
 Swap the flat `applications.json` file for a proper local database (e.g., SQLite) so the tools scale past a few dozen records and support real querying — right now `list_applications` just reads and caps a single JSON file, which won't hold up as the tracker grows.
 
 ---
-**Repo:** https://github.com/JHT127/my-first-mcp
+
+**Repo:** https://github.com/JHT127/job-tracker-mcp
