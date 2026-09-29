@@ -194,6 +194,19 @@ update_status
 
 ---
 
+## Hosted dashboard walkthrough
+
+Open https://jht127.github.io/my-first-mcp/ and verify:
+
+- Dashboard overview with populated application cards.
+- Timeline view showing status events.
+- Contacts view with sample contacts.
+- Search and status filtering.
+- Dark theme and Arabic RTL layout.
+- Claude configuration panel with the local path redacted.
+
+The hosted build uses fictional in-memory data and does not require backend credentials.
+
 # 4:30–5:00 — Questions
 
 ### What to say
@@ -219,7 +232,7 @@ If Wi-Fi is unavailable:
 1. Start the MCP server locally.
 2. Use the local `applications.json` data.
 3. Run the prepared prompts through the local MCP setup.
-4. If the MCP client cannot be used, show the prepared screenshots or Inspector results from previous testing and explain the expected tool calls.
+4. If the MCP client cannot be used, open the hosted dashboard demo and explain the expected tool calls.
 
 The backup demonstrates the same core workflow without depending on an external API.
 
