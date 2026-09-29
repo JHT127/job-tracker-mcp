@@ -3,7 +3,7 @@ import react from "@vitejs/plugin-react";
 
 export default defineConfig({
   plugins: [react()],
-  base: process.env.GITHUB_ACTIONS ? "/my-first-mcp/" : "/",
+  base: process.env.GITHUB_ACTIONS ? "/job-tracker-mcp/" : "/",
   test: {
     environment: "jsdom",
     setupFiles: "./src/setupTests.js",
